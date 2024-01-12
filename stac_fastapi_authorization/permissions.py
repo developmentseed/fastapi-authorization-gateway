@@ -1,0 +1,127 @@
+import logging
+from fastapi.params import Param
+from fastapi.routing import APIRoute
+from pydantic import ValidationError, create_model
+from stac_fastapi_authorization.types import Policy, RoutePermission
+from typing import Mapping, Annotated, Optional
+
+
+def generate_param_validator(params: Mapping[str, Param]):
+    """
+    Generate a pydantic model for validating a set of query params.
+    """
+    prop_map = {}
+    for k, v in params.items():
+        prop_map[k] = (Annotated[str, v], ...)
+
+    return create_model("Params", **prop_map)
+
+
+def route_matches_permission(permission: RoutePermission, route: APIRoute, method: str):
+    logging.info(route.path)
+    logging.info(f"Checking route {route.path_format} against permission {permission}")
+    return route.path_format in permission.paths and method in permission.methods
+
+
+def params_match_permission(
+    permission_params: Optional[Mapping[str, Param]], request_params: dict
+):
+    """
+    Validate provided request parameters against the pydantic model defined on a policy.
+    """
+
+    if permission_params is None:
+        logging.info("No params defined on policy. Match.")
+        return True
+    else:
+        param_validator = generate_param_validator(permission_params)
+        logging.info(f"Param validator: {param_validator}")
+        try:
+            logging.info(f"Request params: {request_params}")
+            param_validator(**request_params)
+        except ValidationError as err:
+            logging.error(err)
+            logging.info("Params do not match permission constraints.")
+            return False
+        else:
+            logging.info("Params do match permission constraints.")
+            return True
+
+
+def has_permission_for_route(
+    policy: Policy, route: APIRoute, method: str, path_params: dict, query_params: dict
+):
+    """
+    Validate that the policy grants access to the given route, method and query params.
+
+    Validates query_params against the pydantic model defined on the policy for a given combination of route
+    and method.
+    """
+
+    # TODO handle request body
+    logging.info(f"Path Params: {path_params}")
+
+    logging.info("Checking deny policy")
+    for permission in policy.deny:
+        if route_matches_permission(permission, route, method):
+            logging.info("Route and method found in deny policy")
+            if permission.path_params is None and permission.query_params is None:
+                logging.info(
+                    "No path or query params defined on deny policy. Denying access"
+                    " since route and method match."
+                )
+                return False
+
+            if permission.path_params:
+                logging.info("Path params defined on deny policy")
+                if params_match_permission(permission.path_params, path_params):
+                    logging.info("Path params match deny policy. Denying access.")
+                    return False
+            if permission.query_params:
+                logging.info("Query params defined on deny policy")
+                if params_match_permission(permission.query_params, query_params):
+                    logging.info("Query params match deny policy. Denying access.")
+                    return False
+            logging.info("Path and query params did not match deny policy.")
+
+    logging.info("Checking approve policy")
+    if not policy.approve:
+        logging.info("No approve policy defined. Granting access.")
+        return True
+
+    for permission in policy.approve:
+        if route_matches_permission(permission, route, method):
+            logging.info("Route and method found in approve policy")
+            if permission.path_params is None and permission.query_params is None:
+                logging.info(
+                    "No path or query params defined on approve policy. Granting access"
+                    " since route and method match."
+                )
+                return True
+            if permission.path_params:
+                logging.info("Path params defined on approve policy")
+                if params_match_permission(permission.path_params, path_params):
+                    logging.info("Path params match approve policy. Granting access.")
+                    return True
+                else:
+                    return False
+            if permission.query_params:
+                logging.info("Query params defined on approve policy")
+                if params_match_permission(permission.query_params, query_params):
+                    logging.info("Query params match approve policy. Granting access.")
+                    return True
+            else:
+                return False
+    else:
+        if policy.default_deny:
+            logging.info(
+                "Route and method did not match any defined policy. Denying access due"
+                " to default_deny setting."
+            )
+            return False
+        else:
+            logging.info(
+                "Route and method did not match any defined policy. Granting access due"
+                " to default_deny setting."
+            )
+            return True
