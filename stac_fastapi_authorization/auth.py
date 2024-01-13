@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Optional
+from typing import Callable
 from stac_fastapi_authorization.permissions import has_permission_for_route
 
 from stac_fastapi_authorization.types import Policy
@@ -47,7 +47,6 @@ def evaluate_request(request: Request, policy: Policy):
 
 
 def build_stac_authorization_dependency(
-    get_user_dependency: Callable,
     policy_generator: Callable,
     # search_request_model: Type[BaseModel],
     policy_evaluator: Callable = evaluate_request,
@@ -55,10 +54,9 @@ def build_stac_authorization_dependency(
     def stac_authorization(
         request: Request,
         # request_data: Optional[search_request_model] = None,
-        user: Optional[dict] = Depends(get_user_dependency),
+        policy: Policy = Depends(policy_generator),
     ):
-        logging.info("Evaluating authorization", extra={"user": user})
-        policy = policy_generator(request, user)
+        logging.info("Evaluating authorization")
         policy_evaluator(request, policy)
 
     return stac_authorization

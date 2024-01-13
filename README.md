@@ -9,7 +9,7 @@ Install via pip
 ## Usage
 
 ```python
-from fastapi import Request
+from fastapi import Depends, Request
 from typing import Optional
 from stac_fastapi_authorization.auth import build_stac_authorization_dependency
 from stac_fastapi_authorization.types import Policy, RoutePermission
@@ -20,7 +20,7 @@ async def get_user(request: Request):
     }
 
 
-def policy_generator(request: Request, user: Optional[dict]):
+def policy_generator(request: Request, user: Depends[get_user]):
     """
     Define your policies here based on the requesting user, maybe.
     """
@@ -45,7 +45,6 @@ def policy_generator(request: Request, user: Optional[dict]):
 
 
 authorization = build_stac_authorization_dependency(
-    get_user_dependency=get_user,
     policy_generator=policy_generator,
 )
 
