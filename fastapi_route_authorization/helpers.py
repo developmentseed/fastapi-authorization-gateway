@@ -1,6 +1,6 @@
 # from fastapi import Request
 
-# from stac_fastapi_authorization.types import Policy
+# from fastapi_route_authorization.types import Policy
 
 # def generate_read_only_policy(request: Request) -> Policy:
 #     """
@@ -8,7 +8,7 @@
 #     """
 #     all_routes = request.app.routes
 #     return Policy(
-#         approve=[
+#         allow=[
 #             RoutePermission(
 #                 path="/collections/{collection_id}",
 #                 method="GET",

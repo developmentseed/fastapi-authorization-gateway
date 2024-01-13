@@ -1,14 +1,14 @@
-"""stac-fastapi-authorization"""
+"""fastapi-route-authorization"""
 
 from setuptools import find_namespace_packages, setup
 
 with open("README.md") as f:
     desc = f.read()
 
-exec(open("stac_fastapi_authorization/version.py").read())
+exec(open("fastapi_route_authorization/version.py").read())
 
 install_requires = [
-    "stac-fastapi.api>=2.4.7",
+    "fastapi>=0.73.0",
 ]
 
 extra_reqs = {
@@ -17,8 +17,8 @@ extra_reqs = {
 
 
 setup(
-    name="stac-fastapi-authorization",
-    description=("An authorization framework for STAC FastAPI"),
+    name="fastapi-route-authorization",
+    description=("A route-based authorization framework for FastAPI"),
     long_description=desc,
     long_description_content_type="text/markdown",
     python_requires=">=3.8",
@@ -27,10 +27,10 @@ setup(
         "Intended Audience :: Science/Research",
         "Programming Language :: Python :: 3.8",
     ],
-    keywords="STAC FastAPI Authorization",
+    keywords="FastAPI Authorization",
     maintainer="Edward Keeble",
     maintainer_email="edward@developmentseed.org",
-    url="https://github.com/edkeeble/stac-fastapi-authorization",
+    url="https://github.com/edkeeble/fastapi-route-authorization",
     license="MIT",
     packages=find_namespace_packages(
         exclude=[

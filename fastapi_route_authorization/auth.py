@@ -1,9 +1,9 @@
 import logging
 from typing import Callable
-from stac_fastapi_authorization.permissions import has_permission_for_route
+from fastapi_route_authorization.permissions import has_permission_for_route
 
-from stac_fastapi_authorization.types import Policy
-from stac_fastapi_authorization.utils import get_route, query_params_to_dict
+from fastapi_route_authorization.types import Policy
+from fastapi_route_authorization.utils import get_route, query_params_to_dict
 
 from fastapi import (
     Depends,
@@ -38,15 +38,15 @@ def evaluate_request(request: Request, policy: Policy):
     # request body
     # if method == "GET":
     #     request.query_params = apply_permission_boundary_to_search_body(
-    #         query_params, policy.approve.search
+    #         query_params, policy.allow.search
     #     )
     # elif method == "POST":
     #     request.body = apply_permission_boundary_to_search_body(
-    #         request.body, policy.approve.search
+    #         request.body, policy.allow.search
     #     )
 
 
-def build_stac_authorization_dependency(
+def build_authorization_dependency(
     policy_generator: Callable,
     # search_request_model: Type[BaseModel],
     policy_evaluator: Callable = evaluate_request,

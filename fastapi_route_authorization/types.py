@@ -25,7 +25,7 @@ class RoutePermission(BaseModel):
     """
     A set of constraints on a route.
 
-    Route access can be constrained by path, request method,
+    Route access can be constrained by paths, request methods,
     path params, query params and request body.
     """
 
@@ -43,13 +43,13 @@ class Policy(BaseModel):
     """
     A policy for defining model-level and object-level permissions for Collections and Items.
 
-    Consists of an approve and deny permissions boundary and a global permission to allow or deny
+    Consists of an allow and deny permissions boundary and a global permission to allow or deny
     creating collections.
 
-    The deny permissions boundary takes precedence over the approve permissions boundary.
+    The deny permissions boundary takes precedence over the allow permissions boundary.
     """
 
-    approve: list[RoutePermission] = []
+    allow: list[RoutePermission] = []
     deny: list[RoutePermission] = []
     search: SearchConstraints = SearchConstraints()
     default_deny: bool = True

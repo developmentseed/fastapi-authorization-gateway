@@ -2,7 +2,7 @@ import logging
 from fastapi.params import Param
 from fastapi.routing import APIRoute
 from pydantic import ValidationError, create_model
-from stac_fastapi_authorization.types import Policy, RoutePermission
+from fastapi_route_authorization.types import Policy, RoutePermission
 from typing import Mapping, Annotated, Optional
 
 
@@ -84,31 +84,31 @@ def has_permission_for_route(
                     return False
             logging.info("Path and query params did not match deny policy.")
 
-    logging.info("Checking approve policy")
-    if not policy.approve:
-        logging.info("No approve policy defined. Granting access.")
+    logging.info("Checking allow policy")
+    if not policy.allow:
+        logging.info("No allow policy defined. Granting access.")
         return True
 
-    for permission in policy.approve:
+    for permission in policy.allow:
         if route_matches_permission(permission, route, method):
-            logging.info("Route and method found in approve policy")
+            logging.info("Route and method found in allow policy")
             if permission.path_params is None and permission.query_params is None:
                 logging.info(
-                    "No path or query params defined on approve policy. Granting access"
+                    "No path or query params defined on allow policy. Granting access"
                     " since route and method match."
                 )
                 return True
             if permission.path_params:
-                logging.info("Path params defined on approve policy")
+                logging.info("Path params defined on allow policy")
                 if params_match_permission(permission.path_params, path_params):
-                    logging.info("Path params match approve policy. Granting access.")
+                    logging.info("Path params match allow policy. Granting access.")
                     return True
                 else:
                     return False
             if permission.query_params:
-                logging.info("Query params defined on approve policy")
+                logging.info("Query params defined on allow policy")
                 if params_match_permission(permission.query_params, query_params):
-                    logging.info("Query params match approve policy. Granting access.")
+                    logging.info("Query params match allow policy. Granting access.")
                     return True
             else:
                 return False
