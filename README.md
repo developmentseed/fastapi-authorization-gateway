@@ -21,7 +21,7 @@ If you don't want the full tutorial and just want to plug this right into your a
 
 ```python
 from fastapi import Depends, Request
-from typing import Optional
+from typing import Annotated, Optional
 from stac_fastapi_authorization.auth import build_authorization_dependency
 from stac_fastapi_authorization.types import Policy, RoutePermission
 
@@ -31,7 +31,7 @@ async def get_user(request: Request):
     }
 
 
-def policy_generator(request: Request, user: Depends[get_user]) -> Policy:
+def policy_generator(request: Request, user: Annotated[dict, Depends(get_user)]) -> Policy:
     """
     Define your policies here based on the requesting user or, really,
     whatever you like. This function will be injected as a dependency

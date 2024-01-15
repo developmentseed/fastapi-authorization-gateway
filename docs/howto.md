@@ -30,7 +30,7 @@ authorization = build_authorization_dependency(
     policy_generator=policy_generator,
 )
 
-app = FastAPI(dependencies=Depends[authorization])
+app = FastAPI(dependencies=[Depends(authorization)])
 ```
 
 ## StacAPI Integration

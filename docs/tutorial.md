@@ -17,7 +17,7 @@ async def get_user(request: Request):
     }
 
 
-def policy_generator(request: Request, user: Depends[get_user]) -> Policy:
+def policy_generator(request: Request, user: Annotated[dict, Depends(get_user)]) -> Policy:
     """
     Define your policies here based on the requesting user or, really,
     whatever you like. This function will be injected as a dependency
@@ -97,7 +97,7 @@ For example, suppose we have a REST API serving a `Collection` model at `/collec
 from fastapi import Request
 from fastapi_route_authorization.types import RoutePermission
 
-def generate_policy(request: Request, user: Depends[get_user]):
+def generate_policy(request: Request, Annotated[dict, Depends(get_user)]):
     all_routes = request.app.routes
     collection_routes = [route for route in all_routes if route.path_format.startswith("/collections")]
     write_collections = RoutePermission(routes=collection_routes, methods=["PUT", "PATCH", "POST"])
@@ -117,7 +117,7 @@ from fastapi import Request
 from fastapi.params import Path
 from fastapi_route_authorization.types import RoutePermission
 
-def generate_policy(request: Request, user: Depends[get_user]):
+def generate_policy(request: Request, Annotated[dict, Depends(get_user)]):
     all_routes = request.app.routes
     collection_routes = [route for route in all_routes if route.path_format.startswith("/collections")]
     user_collection_ids = ["collectionA", "collectionB"]  # these could come from anywhere, including a database, token, API, whatever
@@ -141,7 +141,7 @@ from fastapi import Request
 from fastapi.params import Query
 from fastapi_route_authorization.types import RoutePermission
 
-def generate_policy(request: Request, user: Depends[get_user]):
+def generate_policy(request: Request, Annotated[dict, Depends(get_user)]):
     all_routes = request.app.routes
     if user.is_authenticated:
         max_count = 100
@@ -164,7 +164,7 @@ from fastapi import Request
 from fastapi.params import Query
 from fastapi_route_authorization.types import RoutePermission
 
-def generate_policy(request: Request, user: Depends[get_user]):
+def generate_policy(request: Request, Annotated[dict, Depends(get_user)]):
     all_routes = request.app.routes
     if user.is_authenticated:
         max_count = 100
