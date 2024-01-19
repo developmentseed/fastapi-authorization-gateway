@@ -17,7 +17,7 @@ async def get_user(request: Request):
     }
 
 
-def policy_generator(request: Request, user: Annotated[dict, Depends(get_user)]) -> Policy:
+async def policy_generator(request: Request, user: Annotated[dict, Depends(get_user)]) -> Policy:
     """
     Define your policies here based on the requesting user or, really,
     whatever you like. This function will be injected as a dependency
@@ -69,7 +69,7 @@ Ok, there are a few things going on here. We have defined two functions:
 This is a stand-in for a function you might actually use to retrieve user details from a request. For example, you might leverage HTTP Basic Auth to validate a username/password against a user database and return the row for the requesting user. Alternatively, you might pull user data out of a token. The details are up to you. You don't even need this function, at all, if it doesn't suit your use case, but we provide it as an example to illustrate how you might inject user data into the `policy_generator` function.
 
 `policy_generator`
-This function actually outputs a permissions Policy that our library can use to evaluate and allow/deny incoming requests. How you define your policies is entirely up to you. For example, maybe you have a user object with a `groups` property and want to assign a more permissive policy to users in the "admin" group than to users in the "viewer" group. Maybe you want to leverage JWT claims or scopes to define your policies. The details are up to you. So long as this function returns a `Policy`, it will work with the authorization library. This function is injected as a dependency itself on the `authorization` dependency, so it can leverage any FastAPI Dependencies you like, as illustrated here with the `request` and `get_user` dependencies.
+This coroutine actually outputs a permissions Policy that our library can use to evaluate and allow/deny incoming requests. How you define your policies is entirely up to you. For example, maybe you have a user object with a `groups` property and want to assign a more permissive policy to users in the "admin" group than to users in the "viewer" group. Maybe you want to leverage JWT claims or scopes to define your policies. The details are up to you. So long as this function returns a `Policy`, it will work with the authorization library. This function is injected as a dependency itself on the `authorization` dependency, so it can leverage any FastAPI Dependencies you like, as illustrated here with the `request` and `get_user` dependencies.
 
 Once the `policy_generator` function is defined, we pass it to `build_authorization_dependency`. This function returns an authorization function that can be injected into routes, routers or an entire FastAPI app as a dependency. It will evaluate any incoming requests, against a `Policy` generated using the `policy_generator` function.
 

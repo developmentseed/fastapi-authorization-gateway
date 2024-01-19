@@ -31,7 +31,7 @@ async def get_user(request: Request):
     }
 
 
-def policy_generator(request: Request, user: Annotated[dict, Depends(get_user)]) -> Policy:
+async def policy_generator(request: Request, user: Annotated[dict, Depends(get_user)]) -> Policy:
     """
     Define your policies here based on the requesting user or, really,
     whatever you like. This function will be injected as a dependency

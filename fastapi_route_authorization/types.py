@@ -1,7 +1,7 @@
 from datetime import datetime
 from fastapi.params import Path, Query
 from pydantic import BaseModel
-from typing import Optional, Mapping, Sequence
+from typing import Callable, Optional, Mapping, Sequence
 
 
 class DateWindow(BaseModel):
@@ -39,6 +39,14 @@ class RoutePermission(BaseModel):
         arbitrary_types_allowed = True
 
 
+class RequestTransformation(BaseModel):
+    """
+    A transformation function to apply to the request body before
+    passing it along to the route handler.
+    """
+    path_formats: list[str]
+    transform: Callable[[bytes], bytes]
+
 class Policy(BaseModel):
     """
     A policy for defining model-level and object-level permissions for Collections and Items.
@@ -51,5 +59,5 @@ class Policy(BaseModel):
 
     allow: list[RoutePermission] = []
     deny: list[RoutePermission] = []
-    search: SearchConstraints = SearchConstraints()
+    request_transformations: list[RequestTransformation] = []
     default_deny: bool = True
