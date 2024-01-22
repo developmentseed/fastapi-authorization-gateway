@@ -4,7 +4,6 @@ import inspect
 from typing import Callable, Coroutine, Optional, Type
 from fastapi.routing import APIRoute
 
-from pydantic import BaseModel
 from fastapi_route_authorization.permissions import has_permission_for_route
 
 from fastapi_route_authorization.types import Policy
@@ -18,11 +17,10 @@ from fastapi import (
 )
 
 
-class StacSearch(BaseModel):
-    collection: Optional[str] = None
-
-
 def get_transform_for_path_format(path_format: str, policy: Policy):
+    """
+    Look up request transformation function for a given path format.
+    """
     for transformation in policy.request_transformations:
         if path_format in transformation.path_formats:
             return transformation.transform
@@ -30,8 +28,8 @@ def get_transform_for_path_format(path_format: str, policy: Policy):
 
 def wrap_endpoint(endpoint, response_model: Type):
     """
-    Wrap an endpoint with a function that will mutate specified
-    request parameters.
+    Wrap an endpoint with a function that will first check
+    the authorization policy and optionally mutate the request.
     """
 
     async def wrapped_endpoint(
@@ -42,13 +40,15 @@ def wrap_endpoint(endpoint, response_model: Type):
                 policy: Policy = request.state.policy
                 # check if policy has a transform function for this route
                 route = get_route(request)
-                transform_func = get_transform_for_path_format(route.path_format, policy)
+                transform_func = get_transform_for_path_format(
+                    route.path_format, policy
+                )
                 if transform_func:
-                    transform_func(policy, *args, **kwargs)
+                    transform_func(request, policy, *args, **kwargs)
                 else:
-                    logging.info("No transform function found for this route")
+                    logging.debug("No transform function found for this route")
             else:
-                logging.info("No policy found on request state")
+                logging.debug("No policy found on request state")
         if inspect.iscoroutinefunction(endpoint):
             if request:
                 return await endpoint(request, *args, **kwargs)
@@ -69,12 +69,13 @@ def wrap_endpoint(endpoint, response_model: Type):
 
 
 def wrap_router(router: APIRouter, authorization_dependency: Optional[Callable] = None):
+    """
+    Re-register all routes on a router with wrapped endpoints in order to apply
+    authorization and request mutation prior to passing data to the original endpoints.
+    """
     old_routes = copy(router.routes)
 
     for route in old_routes:
-        logging.info(
-            f"Route {route.name}: {route.path_format} with methods: {route.methods}"
-        )
         if isinstance(route, APIRoute):
             router.routes.remove(route)
             router.add_api_route(
@@ -105,7 +106,7 @@ def wrap_router(router: APIRouter, authorization_dependency: Optional[Callable] 
         #     )
 
 
-async def evaluate_request(request: Request, policy: Policy):
+async def evaluate_request(request: Request, policy: Policy) -> None:
     """
     Determine whether a request is authorized by the given policy.
     If not, raise a 403 Forbidden exception.
@@ -115,7 +116,6 @@ async def evaluate_request(request: Request, policy: Policy):
     route_params = request.path_params
     route = get_route(request)
 
-    logging.info(f"Dependencies: {route.body_field}")
     # parse query params to dict ourselves to avoid squashing duplicate keys
     query_params = query_params_to_dict(request.url.query)
 
@@ -133,7 +133,7 @@ def build_authorization_dependency(
     policy_generator: Coroutine,
     policy_evaluator: Coroutine = evaluate_request,
 ) -> Coroutine:
-    async def stac_authorization(
+    async def authorization_dependency(
         request: Request,
         policy: Policy = Depends(policy_generator),
     ):
@@ -147,16 +147,4 @@ def build_authorization_dependency(
         request.state.policy = policy
         await policy_evaluator(request, policy)
 
-    # else:
-
-    #     async def stac_authorization(
-    #         request: Request,
-    #     ):
-    #         logging.info("Evaluating authorization with policy middleware")
-    #         if hasattr(request.state, "policy"):
-    #             policy = request.state.policy
-    #             await policy_evaluator(request, policy)
-    #         else:
-    #             logging.info("No policy found on request state")
-
-    return stac_authorization
+    return authorization_dependency

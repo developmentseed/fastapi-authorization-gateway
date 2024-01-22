@@ -138,3 +138,5 @@ act/.secrets
 #CDK
 cdk.out
 cdk.context.json
+
+logging.conf
