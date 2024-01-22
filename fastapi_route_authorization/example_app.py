@@ -80,7 +80,6 @@ async def policy_generator(
         logging.debug(f"User: {user}")
         # authenticated requests get full permissions
         policy = authorized_policy
-    request.state.policy = policy
     logging.info(f"Policy: {policy}")
     return policy
 

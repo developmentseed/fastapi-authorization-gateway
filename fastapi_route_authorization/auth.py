@@ -17,6 +17,9 @@ from fastapi import (
 )
 
 
+logger = logging.getLogger("fastapi_route_authorization")
+
+
 def get_transform_for_path_format(path_format: str, policy: Policy):
     """
     Look up request transformation function for a given path format.
@@ -46,9 +49,9 @@ def wrap_endpoint(endpoint, response_model: Type):
                 if transform_func:
                     transform_func(request, policy, *args, **kwargs)
                 else:
-                    logging.debug("No transform function found for this route")
+                    logger.debug("No transform function found for this route")
             else:
-                logging.debug("No policy found on request state")
+                logger.debug("No policy found on request state")
         if inspect.iscoroutinefunction(endpoint):
             if request:
                 return await endpoint(request, *args, **kwargs)
@@ -119,11 +122,11 @@ async def evaluate_request(request: Request, policy: Policy) -> None:
     # parse query params to dict ourselves to avoid squashing duplicate keys
     query_params = query_params_to_dict(request.url.query)
 
-    logging.debug(f"Path: {path}")
-    logging.debug(f"Method: {method}")
-    logging.debug(f"Route params: {route_params}")
-    logging.debug(f"Route: {route.path_format}")
-    logging.debug(f"Query Params: {query_params}")
+    logger.debug(f"Path: {path}")
+    logger.debug(f"Method: {method}")
+    logger.debug(f"Route params: {route_params}")
+    logger.debug(f"Route: {route.path_format}")
+    logger.debug(f"Query Params: {query_params}")
 
     if not has_permission_for_route(policy, route, method, route_params, query_params):
         raise HTTPException(status_code=403, detail="Forbidden")
@@ -137,9 +140,9 @@ def build_authorization_dependency(
         request: Request,
         policy: Policy = Depends(policy_generator),
     ):
-        logging.info("Evaluating authorization with policy dependency")
+        logger.info("Evaluating authorization with policy dependency")
         if hasattr(request.state, "policy"):
-            logging.warning(
+            logger.warning(
                 "Policy already exists on request state. Overwriting. This is likely a mistake "
                 "and you should not be using both a policy dependency and a policy middleware."
             )
