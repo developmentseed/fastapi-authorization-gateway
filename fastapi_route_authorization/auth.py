@@ -17,7 +17,7 @@ from fastapi import (
 )
 
 
-logger = logging.getLogger("fastapi_route_authorization")
+logger = logging.getLogger(__name__)
 
 
 def get_transform_for_path_format(path_format: str, policy: Policy):

@@ -6,7 +6,7 @@ from fastapi_route_authorization.types import Policy, RoutePermission
 from typing import Mapping, Annotated, Optional
 
 
-logger = logging.getLogger("fastapi_route_authorization")
+logger = logging.getLogger(__name__)
 
 
 def generate_param_validator(params: Mapping[str, Param]):
