@@ -79,7 +79,9 @@ def wrap_router(router: APIRouter, authorization_dependency: Optional[Callable] 
     old_routes = copy(router.routes)
 
     for route in old_routes:
+        logger.debug(f"Route: {route}")
         if isinstance(route, APIRoute):
+            logger.info(f"Wrapping route {route.path_format} {route.methods} with authorization dependency")
             router.routes.remove(route)
             router.add_api_route(
                 route.path_format,
