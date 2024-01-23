@@ -38,15 +38,19 @@ def wrap_endpoint(endpoint, response_model: Type):
     async def wrapped_endpoint(
         request: Optional[Request] = None, *args, **kwargs
     ) -> response_model:
+        logger.debug("Calling wrapped endpoint")
         if request:
             if hasattr(request.state, "policy"):
+                logger.debug("Policy found on request state")
                 policy: Policy = request.state.policy
                 # check if policy has a transform function for this route
                 route = get_route(request)
+                logger.debug(f"Checking if route {route.path_format} has a transform function")
                 transform_func = get_transform_for_path_format(
                     route.path_format, policy
                 )
                 if transform_func:
+                    logger.debug("Transform function found for this route")
                     transform_func(request, policy, *args, **kwargs)
                 else:
                     logger.debug("No transform function found for this route")
