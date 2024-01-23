@@ -20,10 +20,11 @@ def generate_param_validator(params: Mapping[str, Param]):
     return create_model("Params", **prop_map)
 
 
-def route_matches_permission(permission: RoutePermission, route: APIRoute, method: str):
-    logger.debug(route.path)
-    logger.debug(f"Checking route {route.path_format} against permission {permission}")
-    return route.path_format in permission.paths and method in permission.methods
+def route_matches_permission(
+    permission: RoutePermission, path_format: str, method: str
+):
+    logger.debug(f"Checking route {path_format} and method {method} against permission {permission}")
+    return path_format in permission.paths and method in permission.methods
 
 
 def params_match_permission(
@@ -66,7 +67,7 @@ def has_permission_for_route(
 
     logger.debug("Checking deny policy")
     for permission in policy.deny:
-        if route_matches_permission(permission, route, method):
+        if route_matches_permission(permission, route.path_format, method):
             logger.debug("Route and method found in deny policy")
             if permission.path_params is None and permission.query_params is None:
                 logger.debug(
@@ -93,7 +94,7 @@ def has_permission_for_route(
         return True
 
     for permission in policy.allow:
-        if route_matches_permission(permission, route, method):
+        if route_matches_permission(permission, route.path_format, method):
             logger.debug("Route and method found in allow policy")
             if permission.path_params is None and permission.query_params is None:
                 logger.debug(
