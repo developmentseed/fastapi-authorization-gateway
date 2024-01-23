@@ -95,7 +95,7 @@ def wrap_router(router: APIRouter, authorization_dependency: Optional[Callable] 
             current_generate_unique_id = route.generate_unique_id_function or router.generate_unique_id_function
             router.add_api_route(
                 route.path,
-                route.endpoint,
+                wrap_endpoint(route.endpoint, route.response_model),
                 response_model=route.response_model,
                 status_code=route.status_code,
                 tags=current_tags,
