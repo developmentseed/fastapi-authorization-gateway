@@ -79,36 +79,44 @@ def wrap_router(router: APIRouter, authorization_dependency: Optional[Callable] 
     old_routes = copy(router.routes)
 
     for route in old_routes:
-        logger.debug(f"Route: {route}")
         if isinstance(route, APIRoute):
             logger.info(f"Wrapping route {route.path_format} {route.methods} with authorization dependency")
             router.routes.remove(route)
+            combined_responses = route.responses
+            use_response_class = route.response_class
+            current_tags = route.tags
+            current_dependencies = route.dependencies
+            current_dependencies.append(Depends(authorization_dependency))
+            current_callbacks = route.callbacks
+            current_generate_unique_id = route.generate_unique_id_function or router.generate_unique_id_function
             router.add_api_route(
-                route.path_format,
-                wrap_endpoint(
-                    endpoint=route.endpoint,
-                    response_model=route.response_model,
-                ),
-                methods=route.methods,
+                route.path,
+                route.endpoint,
                 response_model=route.response_model,
                 status_code=route.status_code,
-                tags=route.tags,
-                dependencies=route.dependencies + [Depends(authorization_dependency)]
-                if authorization_dependency
-                else [],
+                tags=current_tags,
+                dependencies=current_dependencies,
                 summary=route.summary,
                 description=route.description,
                 response_description=route.response_description,
+                responses=combined_responses,
+                deprecated=route.deprecated,
+                methods=route.methods,
+                operation_id=route.operation_id,
+                response_model_include=route.response_model_include,
+                response_model_exclude=route.response_model_exclude,
+                response_model_by_alias=route.response_model_by_alias,
+                response_model_exclude_unset=route.response_model_exclude_unset,
+                response_model_exclude_defaults=route.response_model_exclude_defaults,
+                response_model_exclude_none=route.response_model_exclude_none,
+                include_in_schema=route.include_in_schema,
+                response_class=use_response_class,
+                name=route.name,
+                route_class_override=type(route),
+                callbacks=current_callbacks,
+                openapi_extra=route.openapi_extra,
+                generate_unique_id_function=current_generate_unique_id,
             )
-        # elif isinstance(route, Route):
-        #     # handle starlette routes
-        #     router.routes.remove(route)
-        #     router.add_route(
-        #         route.path,
-        #         wrap_endpoint(route.endpoint, transform_func=transform_request),
-        #         methods=route.methods,
-        #         name=route.name,
-        #     )
 
 
 async def evaluate_request(request: Request, policy: Policy) -> None:
