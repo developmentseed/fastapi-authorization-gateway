@@ -6,7 +6,7 @@ from setuptools import find_namespace_packages, setup
 with open("README.md") as f:
     desc = f.read()
 
-exec(open("fastapi_route_authorization/version.py").read())
+exec(open("fastapi_authorization_gateway/version.py").read())
 
 install_requires = [
     "fastapi>=0.73.0",

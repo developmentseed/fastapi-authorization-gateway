@@ -1,5 +1,5 @@
-from fastapi_route_authorization.permissions import route_matches_permission
-from fastapi_route_authorization.types import RoutePermission
+from fastapi_authorization_gateway.permissions import route_matches_permission
+from fastapi_authorization_gateway.types import RoutePermission
 
 
 def test_route_matches_permission_path_method_match():

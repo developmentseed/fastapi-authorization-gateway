@@ -95,7 +95,7 @@ For example, suppose we have a REST API serving a `Collection` model at `/collec
 
 ```python
 from fastapi import Request
-from fastapi_route_authorization.types import RoutePermission
+from fastapi_authorization_gateway.types import RoutePermission
 
 def generate_policy(request: Request, Annotated[dict, Depends(get_user)]):
     all_routes = request.app.routes
@@ -115,7 +115,7 @@ The example above allows us to control access to specific routes, but what if we
 ```python
 from fastapi import Request
 from fastapi.params import Path
-from fastapi_route_authorization.types import RoutePermission
+from fastapi_authorization_gateway.types import RoutePermission
 
 def generate_policy(request: Request, Annotated[dict, Depends(get_user)]):
     all_routes = request.app.routes
@@ -140,7 +140,7 @@ We may also want to control access depending on which query parameters are speci
 from typing import Annotated
 from fastapi import Request
 from fastapi.params import Query
-from fastapi_route_authorization.types import RoutePermission
+from fastapi_authorization_gateway.types import RoutePermission
 
 def generate_policy(request: Request, Annotated[dict, Depends(get_user)]):
     all_routes = request.app.routes
@@ -163,7 +163,7 @@ Note the addition of `default_deny=True` in the Policy. We haven't seen this yet
 ```python
 from fastapi import Request
 from fastapi.params import Query
-from fastapi_route_authorization.types import RoutePermission
+from fastapi_authorization_gateway.types import RoutePermission
 
 def generate_policy(request: Request, Annotated[dict, Depends(get_user)]):
     all_routes = request.app.routes

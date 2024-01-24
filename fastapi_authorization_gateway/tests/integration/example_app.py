@@ -2,11 +2,11 @@ import logging
 from typing import Annotated
 from fastapi import Depends, FastAPI, Request
 from fastapi.routing import APIRoute
-from fastapi_route_authorization.auth import (
+from fastapi_authorization_gateway.auth import (
     build_authorization_dependency,
     wrap_router,
 )
-from fastapi_route_authorization.types import (
+from fastapi_authorization_gateway.types import (
     Policy,
     RoutePermission,
     RequestTransformation,

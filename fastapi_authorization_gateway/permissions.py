@@ -1,7 +1,7 @@
 import logging
 from fastapi.params import Param
 from pydantic import ValidationError, create_model
-from fastapi_route_authorization.types import Policy, RoutePermission
+from fastapi_authorization_gateway.types import Policy, RoutePermission
 from typing import Any, Mapping, Annotated, Optional
 
 

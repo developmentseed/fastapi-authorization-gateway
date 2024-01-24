@@ -7,7 +7,7 @@ transformation function that filters the requested collections on the
 search route to only those that the user has access to.
 """
 from fastapi.testclient import TestClient
-from fastapi_route_authorization.tests.integration.example_app import app
+from fastapi_authorization_gateway.tests.integration.example_app import app
 
 client = TestClient(app)
 

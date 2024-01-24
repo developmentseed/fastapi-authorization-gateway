@@ -3,7 +3,7 @@ Test params_match_permission function.
 """
 from typing import Annotated
 from fastapi import Path, Query
-from fastapi_route_authorization.permissions import params_match_permission
+from fastapi_authorization_gateway.permissions import params_match_permission
 
 
 def test_params_match_permission_no_params():

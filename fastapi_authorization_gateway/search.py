@@ -1,4 +1,4 @@
-from fastapi_route_authorization.types import SearchConstraints
+from fastapi_authorization_gateway.types import SearchConstraints
 
 
 def apply_permission_boundary_to_search_body(
