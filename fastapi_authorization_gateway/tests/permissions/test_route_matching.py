@@ -18,6 +18,7 @@ def test_route_matches_permission_path_method_match():
         is True
     )
 
+
 def test_route_matches_permission_path_match_method_no_match():
     """
     Test that if the path matches but the method does not, the function returns False.
@@ -33,6 +34,7 @@ def test_route_matches_permission_path_match_method_no_match():
         )
         is False
     )
+
 
 def test_route_matches_permission_path_no_match_method_match():
     """
@@ -50,6 +52,7 @@ def test_route_matches_permission_path_no_match_method_match():
         is False
     )
 
+
 def test_route_matches_permission_path_no_match_method_no_match():
     """
     Test that if neither the method nor the path matches, the function returns False.
@@ -65,6 +68,7 @@ def test_route_matches_permission_path_no_match_method_no_match():
         )
         is False
     )
+
 
 def test_route_matches_permission_path_match_method_match_multiple():
     """
@@ -82,6 +86,7 @@ def test_route_matches_permission_path_match_method_match_multiple():
         )
         is True
     )
+
 
 def test_route_matches_permission_path_match_multiple():
     """

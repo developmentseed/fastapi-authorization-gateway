@@ -43,7 +43,9 @@ async def policy_generator(
     # A permission matching write access to all routes, with no constraints
     # on path or query parameters except for the search route
     all_write = RoutePermission(
-        paths=[route.path_format for route in all_routes if route.path_format != "/search"],
+        paths=[
+            route.path_format for route in all_routes if route.path_format != "/search"
+        ],
         methods=["POST", "PUT", "PATCH", "DELETE"],
     )
 
@@ -87,7 +89,9 @@ def transform_search(
     Filter the requested collections to only those that the user has access to.
     """
     search_body.collections = [
-        collection for collection in search_body.collections if collection in policy.metadata["collections"]
+        collection
+        for collection in search_body.collections
+        if collection in policy.metadata["collections"]
     ]
 
 

@@ -24,12 +24,15 @@ def route_matches_permission(
     """
     Check if a given route and method are covered by a given permission.
     """
-    logger.debug(f"Checking route {path_format} and method {method} against permission {permission}")
+    logger.debug(
+        f"Checking route {path_format} and method {method} against permission {permission}"
+    )
     return path_format in permission.paths and method in permission.methods
 
 
 def params_match_permission(
-    permission_params: Optional[Mapping[str, Annotated[Any, Param]]], request_params: dict
+    permission_params: Optional[Mapping[str, Annotated[Any, Param]]],
+    request_params: dict,
 ):
     """
     Validate provided request parameters against the pydantic model defined on a policy.
@@ -43,7 +46,9 @@ def params_match_permission(
             logger.debug(f"Request params: {request_params}")
             param_validator(**request_params)
         except ValidationError as err:
-            logger.debug("Params do not match permission constraints.", extra={"error": err})
+            logger.debug(
+                "Params do not match permission constraints.", extra={"error": err}
+            )
             return False
         else:
             logger.debug("Params do match permission constraints.")
@@ -51,7 +56,11 @@ def params_match_permission(
 
 
 def has_permission_for_route(
-    policy: Policy, route_path_format: str, method: str, path_params: dict, query_params: dict
+    policy: Policy,
+    route_path_format: str,
+    method: str,
+    path_params: dict,
+    query_params: dict,
 ):
     """
     Validate that the policy grants access to the given route, method and query params.

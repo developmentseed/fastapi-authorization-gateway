@@ -49,8 +49,10 @@ class RequestTransformation(BaseModel):
     additional arguments passed to the route handler. It is expected
     to mutate values in place and not return anything.
     """
+
     path_formats: list[str]
     transform: Callable[[Request, "Policy", ...], None]  # type: ignore
+
 
 class Policy(BaseModel):
     """

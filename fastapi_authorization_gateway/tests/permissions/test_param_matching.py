@@ -24,14 +24,20 @@ def test_params_match_permission_user_params_match():
     """
     Test that if user params match the permission, the function returns True.
     """
-    assert params_match_permission({"foo": Annotated[int, Query(le=10)]}, {"foo": 5}) is True
+    assert (
+        params_match_permission({"foo": Annotated[int, Query(le=10)]}, {"foo": 5})
+        is True
+    )
 
 
 def test_params_match_permission_user_params_no_match():
     """
     Test that if user params do not match the permission, the function returns False.
     """
-    assert params_match_permission({"foo": Annotated[int, Query(le=10)]}, {"foo": 15}) is False
+    assert (
+        params_match_permission({"foo": Annotated[int, Query(le=10)]}, {"foo": 15})
+        is False
+    )
 
 
 def test_params_match_permission_user_params_match_no_annotation():
@@ -47,7 +53,10 @@ def test_params_match_permission_user_params_no_match_annotation_type():
     Test that if user params do not match the annotation type
     the function returns False.
     """
-    assert params_match_permission({"foo": Annotated[int, Query()]}, {"foo": "bar"}) is False
+    assert (
+        params_match_permission({"foo": Annotated[int, Query()]}, {"foo": "bar"})
+        is False
+    )
 
 
 def test_params_match_permission_user_params_match_type_no_conditions():
@@ -55,7 +64,10 @@ def test_params_match_permission_user_params_match_type_no_conditions():
     Test that if user params match the annotation type and no Param conditions
     are specified, the function returns True.
     """
-    assert params_match_permission({"foo": Annotated[str, Query()]}, {"foo": "bar"}) is True
+    assert (
+        params_match_permission({"foo": Annotated[str, Query()]}, {"foo": "bar"})
+        is True
+    )
 
 
 def test_path_param_with_pattern():
@@ -63,7 +75,12 @@ def test_path_param_with_pattern():
     Test that if a path param with a pattern is provided and a matching string is provided,
     the function returns True.
     """
-    assert params_match_permission({"foo": Annotated[str, Path(pattern="^foo$")]}, {"foo": "foo"}) is True
+    assert (
+        params_match_permission(
+            {"foo": Annotated[str, Path(pattern="^foo$")]}, {"foo": "foo"}
+        )
+        is True
+    )
 
 
 def test_path_param_with_pattern_no_match():
@@ -71,4 +88,9 @@ def test_path_param_with_pattern_no_match():
     Test that if a path param with a pattern is provided and a non-matching string is provided,
     the function returns False.
     """
-    assert params_match_permission({"foo": Annotated[str, Path(pattern="^foo$")]}, {"foo": "bar"}) is False
+    assert (
+        params_match_permission(
+            {"foo": Annotated[str, Path(pattern="^foo$")]}, {"foo": "bar"}
+        )
+        is False
+    )

@@ -4,10 +4,9 @@ import inspect
 from typing import Callable, Coroutine, Optional, Type
 from fastapi.routing import APIRoute
 
-from fastapi_route_authorization.permissions import has_permission_for_route
-
-from fastapi_route_authorization.types import Policy
-from fastapi_route_authorization.utils import get_route, query_params_to_dict
+from fastapi_authorization_gateway.permissions import has_permission_for_route
+from fastapi_authorization_gateway.types import Policy
+from fastapi_authorization_gateway.utils import get_route, query_params_to_dict
 
 from fastapi import (
     APIRouter,
@@ -45,7 +44,9 @@ def wrap_endpoint(endpoint, response_model: Type):
                 policy: Policy = request.state.policy
                 # check if policy has a transform function for this route
                 route = get_route(request)
-                logger.debug(f"Checking if route {route.path_format} has a transform function")
+                logger.debug(
+                    f"Checking if route {route.path_format} has a transform function"
+                )
                 transform_func = get_transform_for_path_format(
                     route.path_format, policy
                 )
@@ -84,7 +85,9 @@ def wrap_router(router: APIRouter, authorization_dependency: Optional[Callable] 
 
     for route in old_routes:
         if isinstance(route, APIRoute):
-            logger.info(f"Wrapping route {route.path_format} {route.methods} with authorization dependency")
+            logger.info(
+                f"Wrapping route {route.path_format} {route.methods} with authorization dependency"
+            )
             router.routes.remove(route)
             combined_responses = route.responses
             use_response_class = route.response_class
@@ -92,7 +95,9 @@ def wrap_router(router: APIRouter, authorization_dependency: Optional[Callable] 
             current_dependencies = route.dependencies
             current_dependencies.append(Depends(authorization_dependency))
             current_callbacks = route.callbacks
-            current_generate_unique_id = route.generate_unique_id_function or router.generate_unique_id_function
+            current_generate_unique_id = (
+                route.generate_unique_id_function or router.generate_unique_id_function
+            )
             router.add_api_route(
                 route.path,
                 wrap_endpoint(route.endpoint, route.response_model),
@@ -142,7 +147,9 @@ async def evaluate_request(request: Request, policy: Policy) -> None:
     logger.debug(f"Route: {route.path_format}")
     logger.debug(f"Query Params: {query_params}")
 
-    if not has_permission_for_route(policy, route.path_format, method, route_params, query_params):
+    if not has_permission_for_route(
+        policy, route.path_format, method, route_params, query_params
+    ):
         raise HTTPException(status_code=403, detail="Forbidden")
 
 

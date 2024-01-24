@@ -1,4 +1,4 @@
-# type: ignore 
+# type: ignore
 """fastapi-route-authorization"""
 
 from setuptools import find_namespace_packages, setup
@@ -13,7 +13,13 @@ install_requires = [
 ]
 
 extra_reqs = {
-    "dev": ["black>=22.3.0", "flake8>=4.0.1", "pyright>=1.1.251", "pytest>=7.4.4", "httpx==0.26.0"],
+    "dev": [
+        "black>=22.3.0",
+        "flake8>=4.0.1",
+        "pyright>=1.1.251",
+        "pytest>=7.4.4",
+        "httpx==0.26.0",
+    ],
 }
 
 

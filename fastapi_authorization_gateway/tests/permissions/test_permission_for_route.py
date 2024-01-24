@@ -401,4 +401,3 @@ def test_deny_overrides_allow():
         )
         is False
     )
-
