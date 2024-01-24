@@ -142,7 +142,7 @@ async def evaluate_request(request: Request, policy: Policy) -> None:
     logger.debug(f"Route: {route.path_format}")
     logger.debug(f"Query Params: {query_params}")
 
-    if not has_permission_for_route(policy, route, method, route_params, query_params):
+    if not has_permission_for_route(policy, route.path_format, method, route_params, query_params):
         raise HTTPException(status_code=403, detail="Forbidden")
 
 

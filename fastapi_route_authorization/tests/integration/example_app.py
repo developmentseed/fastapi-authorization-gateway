@@ -41,10 +41,15 @@ async def policy_generator(
     all_routes: list[APIRoute] = request.app.routes
 
     # A permission matching write access to all routes, with no constraints
-    # on path or query parameters
+    # on path or query parameters except for the search route
     all_write = RoutePermission(
-        paths=[route.path_format for route in all_routes],
+        paths=[route.path_format for route in all_routes if route.path_format != "/search"],
         methods=["POST", "PUT", "PATCH", "DELETE"],
+    )
+
+    search = RoutePermission(
+        paths=["/search"],
+        methods=["POST"],
     )
 
     # a permission matching read access to all routes, with no constraints
@@ -60,26 +65,17 @@ async def policy_generator(
         )
     ]
 
-    # read only policy allows read requests on all routes and denies write requests
-    # falling back to denying a request if it matches none of the permissions
-    read_only_policy = Policy(allow=[all_read], deny=[all_write], default_deny=True)
-
-    # a more permissive policy granting write and read access on all routes, falling back
-    # to approving a request if it matches none of the permissions
+    # A policy allowing GET access to all routes and POST access only
+    # to the Search route.
     authorized_policy = Policy(
-        allow=[all_write, all_read],
+        allow=[all_read, search],
+        deny=[all_write],
         request_transformations=request_transformations,
         default_deny=False,
         metadata={"collections": user["collections"]},
     )
 
-    if not user:
-        # anonymous requests get read only permissions
-        policy = read_only_policy
-    else:
-        logging.debug(f"User: {user}")
-        # authenticated requests get full permissions
-        policy = authorized_policy
+    policy = authorized_policy
     logging.info(f"Policy: {policy}")
     return policy
 
@@ -90,9 +86,9 @@ def transform_search(
     """
     Filter the requested collections to only those that the user has access to.
     """
-    search_body.collections = list(
-        set(search_body.collections) & set(policy.metadata["collections"])
-    )
+    search_body.collections = [
+        collection for collection in search_body.collections if collection in policy.metadata["collections"]
+    ]
 
 
 def change_age(request_body: bytes) -> bytes:
@@ -123,15 +119,14 @@ async def create_test(request: Request, request_data: TestData):
     return {"status": "ok", "data": request_data}
 
 
-@app.post("/test/{test_id}")
-def update_test(request: Request, test_id: int, request_data: TestData):
+@app.get("/test/{test_id}")
+def update_test(request: Request, test_id: int):
     logging.info(f"Test ID: {test_id}")
-    return {"status": "ok", "data": request_data}
+    return {"status": "ok", "test_id": test_id}
 
 
 @app.post("/search")
 def search(request: Request, search_body: StacSearch) -> StacSearch:
-    print(f"{search_body=}")
     return search_body
 
 

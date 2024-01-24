@@ -2,7 +2,7 @@ from datetime import datetime
 from fastapi import Request
 from fastapi.params import Path, Query
 from pydantic import BaseModel, Field
-from typing import Callable, Optional, Mapping, Sequence
+from typing import Annotated, Any, Callable, Optional, Mapping, Sequence
 
 
 class DateWindow(BaseModel):
@@ -32,8 +32,8 @@ class RoutePermission(BaseModel):
 
     paths: Sequence[str]
     methods: Sequence[str]
-    path_params: Optional[Mapping[str, Path]] = None
-    query_params: Optional[Mapping[str, Query]] = None
+    path_params: Optional[Mapping[str, Annotated[Any, Path]]] = None
+    query_params: Optional[Mapping[str, Annotated[Any, Query]]] = None
     body: Optional[BaseModel] = None
 
     class Config:

@@ -137,6 +137,7 @@ Note that we leverage FastAPIs `Path` class to define the path parameter conditi
 We may also want to control access depending on which query parameters are specified on a request. We can do so in a similar fashion to the Path Parameters:
 
 ```python
+from typing import Annotated
 from fastapi import Request
 from fastapi.params import Query
 from fastapi_route_authorization.types import RoutePermission
@@ -150,7 +151,7 @@ def generate_policy(request: Request, Annotated[dict, Depends(get_user)]):
     read_collections = RoutePermission(
         routes=["/collections"],
         methods=["GET"],
-        query_params={"limit": Query(le=max_count)}
+        query_params={"limit": Annotated[int, Query(le=max_count)]}
     )
     return Policy(allow=[read_collections], default_deny=True)
 ```

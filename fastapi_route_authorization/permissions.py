@@ -1,51 +1,49 @@
 import logging
 from fastapi.params import Param
-from fastapi.routing import APIRoute
 from pydantic import ValidationError, create_model
 from fastapi_route_authorization.types import Policy, RoutePermission
-from typing import Mapping, Annotated, Optional
+from typing import Any, Mapping, Annotated, Optional
 
 
 logger = logging.getLogger(__name__)
 
 
-def generate_param_validator(params: Mapping[str, Param]):
+def generate_param_validator(params: Mapping[str, Annotated[Any, Param]]):
     """
     Generate a pydantic model for validating a set of query params.
     """
     prop_map = {}
     for k, v in params.items():
-        prop_map[k] = (Annotated[str, v], ...)
-
+        prop_map[k] = (v, ...)
     return create_model("Params", **prop_map)
 
 
 def route_matches_permission(
     permission: RoutePermission, path_format: str, method: str
 ):
+    """
+    Check if a given route and method are covered by a given permission.
+    """
     logger.debug(f"Checking route {path_format} and method {method} against permission {permission}")
     return path_format in permission.paths and method in permission.methods
 
 
 def params_match_permission(
-    permission_params: Optional[Mapping[str, Param]], request_params: dict
+    permission_params: Optional[Mapping[str, Annotated[Any, Param]]], request_params: dict
 ):
     """
     Validate provided request parameters against the pydantic model defined on a policy.
     """
-
     if permission_params is None:
         logger.debug("No params defined on policy. Match.")
         return True
     else:
         param_validator = generate_param_validator(permission_params)
-        logger.debug(f"Param validator: {param_validator}")
         try:
             logger.debug(f"Request params: {request_params}")
             param_validator(**request_params)
         except ValidationError as err:
-            logger.error(err)
-            logger.debug("Params do not match permission constraints.")
+            logger.debug("Params do not match permission constraints.", extra={"error": err})
             return False
         else:
             logger.debug("Params do match permission constraints.")
@@ -53,7 +51,7 @@ def params_match_permission(
 
 
 def has_permission_for_route(
-    policy: Policy, route: APIRoute, method: str, path_params: dict, query_params: dict
+    policy: Policy, route_path_format: str, method: str, path_params: dict, query_params: dict
 ):
     """
     Validate that the policy grants access to the given route, method and query params.
@@ -61,13 +59,9 @@ def has_permission_for_route(
     Validates query_params against the pydantic model defined on the policy for a given combination of route
     and method.
     """
-
-    # TODO handle request body
-    logger.debug(f"Path Params: {path_params}")
-
     logger.debug("Checking deny policy")
     for permission in policy.deny:
-        if route_matches_permission(permission, route.path_format, method):
+        if route_matches_permission(permission, route_path_format, method):
             logger.debug("Route and method found in deny policy")
             if permission.path_params is None and permission.query_params is None:
                 logger.debug(
@@ -89,12 +83,8 @@ def has_permission_for_route(
             logger.debug("Path and query params did not match deny policy.")
 
     logger.debug("Checking allow policy")
-    if not policy.allow:
-        logger.debug("No allow policy defined. Granting access.")
-        return True
-
     for permission in policy.allow:
-        if route_matches_permission(permission, route.path_format, method):
+        if route_matches_permission(permission, route_path_format, method):
             logger.debug("Route and method found in allow policy")
             if permission.path_params is None and permission.query_params is None:
                 logger.debug(
@@ -105,8 +95,7 @@ def has_permission_for_route(
             if permission.path_params:
                 logger.debug("Path params defined on allow policy")
                 if params_match_permission(permission.path_params, path_params):
-                    logger.debug("Path params match allow policy. Granting access.")
-                    return True
+                    logger.debug("Path params match allow policy.")
                 else:
                     return False
             if permission.query_params:
@@ -115,7 +104,7 @@ def has_permission_for_route(
                     logger.debug("Query params match allow policy. Granting access.")
                     return True
             else:
-                return False
+                return True
     else:
         if policy.default_deny:
             logger.debug(
