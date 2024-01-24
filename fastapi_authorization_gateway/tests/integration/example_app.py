@@ -110,6 +110,12 @@ def change_age(request_body: bytes) -> bytes:
     return json.dumps(decoded_body).encode("utf-8")
 
 
+# build the authorization dependency
+authorization = build_authorization_dependency(
+    policy_generator=policy_generator,
+)
+
+
 app = FastAPI()
 
 
@@ -133,11 +139,6 @@ def update_test(request: Request, test_id: int):
 def search(request: Request, search_body: StacSearch) -> StacSearch:
     return search_body
 
-
-# build the authorization dependency
-authorization = build_authorization_dependency(
-    policy_generator=policy_generator,
-)
 
 # Wrap existing routes in order to enable authorization
 # and request mutation.
