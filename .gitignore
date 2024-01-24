@@ -140,3 +140,4 @@ cdk.out
 cdk.context.json
 
 logging.conf
+settings.json
