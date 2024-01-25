@@ -114,16 +114,16 @@ def has_permission_for_route(
                     return True
             else:
                 return True
+    
+    if policy.default_deny:
+        logger.debug(
+            "Route and method did not match any defined policy. Denying access due"
+            " to default_deny setting."
+        )
+        return False
     else:
-        if policy.default_deny:
-            logger.debug(
-                "Route and method did not match any defined policy. Denying access due"
-                " to default_deny setting."
-            )
-            return False
-        else:
-            logger.debug(
-                "Route and method did not match any defined policy. Granting access due"
-                " to default_deny setting."
-            )
-            return True
+        logger.debug(
+            "Route and method did not match any defined policy. Granting access due"
+            " to default_deny setting."
+        )
+        return True

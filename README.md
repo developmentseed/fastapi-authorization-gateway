@@ -1,12 +1,12 @@
-# FastAPI Route Authorization
+# FastAPI Authorization Gateway
 
-This is a basic library for configuring route-based permission policies on a FastAPI app. It was originally developed to serve the needs of [stac-fastapi](https://github.com/stac-utils/stac-fastapi) but may be generally useful, if your authorization policies can be evaluated against a combination of routes, request methods, path parameters and query parameters.
+This library enables route-level authorization for FastAPI apps. It is particularly useful in cases where you need to limit access to routes that you do not directly control. For example, if you make use of a library which sets up a range of routes on your behalf (it was designed with [stac-fastapi](https://github.com/stac-utils/stac-fastapi) in mind), you can use this library to restrict access to any of those routes using authorization policies. These policies can be evaluated against a combination of route paths, methods, path parameters and query parameters. It also provides a mechanism for mutating requests before passing them on to downstream endpoints, for cases where you need to pre-emptively filter a request.
 
 ## Setup
 
 Install via pip. Use the github URL until we get this up on pypi:
 
-`pip install git+https://github.com/edkeeble/fastapi-route-authorization.git`
+`pip install git+https://github.com/edkeeble/fastapi-authorization-gateway.git`
 
 ## Usage
 
@@ -22,10 +22,15 @@ If you don't want the full tutorial and just want to plug this right into your a
 ```python
 from fastapi import Depends, Request
 from typing import Annotated, Optional
-from stac_fastapi_authorization.auth import build_authorization_dependency
-from stac_fastapi_authorization.types import Policy, RoutePermission
+from fastapi_authorization_gateway.auth import build_authorization_dependency
+from fastapi_authorization_gateway.types import Policy, RoutePermission
+
 
 async def get_user(request: Request):
+    """
+    Replace this with a function to retrieve a real user
+    (from a token, for example).
+    """
     return {
         "username": "test"
     }
@@ -76,12 +81,17 @@ authorization = build_authorization_dependency(
     policy_generator=policy_generator,
 )
 
+
 app = FastAPI(dependencies=[Depends(authorization)])
 
-@app.get("/")
-def home(request: Request):
+
+@app.get("/test")
+def get_test(request: Request):
     return {"status": "ok"}
 
 
-
+@app.post("/test")
+def post_test(request: Request):
+    print("Should not be able to reach this endpoint with read-only policy")
+    return {"status": "ok"}
 ```

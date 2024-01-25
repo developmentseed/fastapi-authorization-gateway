@@ -33,69 +33,135 @@ authorization = build_authorization_dependency(
 app = FastAPI(dependencies=[Depends(authorization)])
 ```
 
-## StacAPI Integration
+## Path Parameter Matching
 
-If we only want to use the authorization dependency on specific StacApi routes, we can do so using one of two mechanisms provided by stac-fastapi. The first is to define the dependency on the `APIRouter` for the app. This will invoke it on any request handled by the core APIRouter.
+We can enable a kind of object-level permissions using Path matching in our Policies. For example:
 
 ```python
-# define our policy generator up here
+from fastapi import Request
+from fastapi.params import Path
+from fastapi_authorization_gateway.types import RoutePermission
 
-authorization = build_authorization_dependency(
-    policy_generator=policy_generator,
-)
-
-StacApi(
-    app=app,  # our FastAPI app
-    router=APIRouter(
-        dependencies=[Depends(authorization)],
-    ),
+def generate_policy(request: Request, Annotated[dict, Depends(get_user)]):
+    allowed_collection_regex = r"^(collectionA|collectionB)$"
+    user_collections = RoutePermission(
+        paths=["/collections/{collection_id}"],
+        methods=["GET", "PUT", "PATCH", "POST"],
+        path_params={"collecton_id": Annotated[str, Path(pattern=user_collection_regex)]}
+    )
+    return Policy(allow=[user_collections])
 ```
 
-*However*, the core router only seems to cover routes from the core STAC Spec and does not cover common extensions, such as Transactions. In order to support depenency injection on routes provided by extensions, the `StacApi` class provides a `route_dependencies` argument, which allow us to define a list of routes and dependencies to inject for them.
+The policy defined above will limit access to the `/collections/{collection_id}` endpoint to only requests where the `collection_id` path parameter matches the specified regex (either "collectionA" or "collectionB" in this case). Any other requests to that endpoint will be denied.
+
+You can make use of the full conditional capabilities of FastAPIs Path class here, so in addition to `pattern`, you could leverage `lt`, `gt`, etc to add conditions on numerical values.
+
+## Query Parameter Matching
+
+We can also restrict access based on Query parameter values, in much the same way as we do with Path parameters.
 
 ```python
-# define our policy generator up here
+from fastapi import Request
+from fastapi.params import Query
+from fastapi_authorization_gateway.types import RoutePermission
 
-authorization = build_authorization_dependency(
-    policy_generator=policy_generator,
-)
+def generate_policy(request: Request, Annotated[dict, Depends(get_user)]):
+    allowed_collection_regex = r"^(collectionA|collectionB)$"
+    user_collections = RoutePermission(
+        paths=["/collections"],
+        methods=["GET"],
+        query_params={"collecton_id": Annotated[str, Query(pattern=user_collection_regex)]}
+    )
+    return Policy(allow=[user_collections])
+```
 
-StacApi(
-    app=app,  # our FastAPI app
-    router=APIRouter(
-        dependencies=[Depends(authorization)],
-    ),
-    route_dependencies=[
-        (
-            [
-                {
-                    "path": "/collections",
-                    "method": "GET",
-                },
-                {
-                    "path": "/collections/{collectionId}",
-                    "method": "PUT",
-                },
-                {
-                    "path": "/collections/{collectionId}",
-                    "method": "DELETE",
-                },
-                {
-                    "path": "/collections/{collectionId}/items",
-                    "method": "POST",
-                },
-                {
-                    "path": "/collections/{collectionId}/items/{itemId}",
-                    "method": "PUT",
-                },
-                {
-                    "path": "/collections/{collectionId}/items/{itemId}",
-                    "method": "DELETE",
-                },
-            ],
-            [Depends(authorization)],
-        ),
+In this case, we are restricting requests to the `/collections` to only those where the Query paramter `collection_id` matches the provided regex. For example, `/collections?collection_id=collectionA` would be allowed, but `/collections?collection_id=collectionC` would be denied.
+
+## Request Transformation
+
+## Request Transformation
+
+Authorization is not only about allowing or denying access to a route. In some cases, it makes sense to mutate a request in order to only return data that the user is allowed to access. For example, we may want to filter queries passed to a Search endpoint in order to avoid returning unauthorized data. fastapi-authorization-gateway enables this functionality, but it does require that we set up our authorization layer a bit differently.
+
+In order to mutate a request before passing it on to the underlying endpoint, we wrap all endpoints in a generic receiving function, which runs the usual authorization dependency and then executes any desired request transformations prior to passing everything on to the original endpoing. In order to accomplish this, we need to re-register all endpoints on the router, replacing them with their wrapped counterparts. In practice, what this means for you is the code to add fastapi-authorization-gateway to your app will change from this:
+
+```python
+class SearchBody(BaseModel):
+    collections: list[str] = Field(default_factory=list)
+
+
+def transform_search(
+    request: Request, policy: Policy, search_body: SearchBody, *args, **kwargs
+):
+    """
+    Filter the requested collections to only those that the user has access to.
+    """
+    search_body.collections = [
+        collection
+        for collection in search_body.collections
+        if collection in policy.metadata["collections"]
     ]
+
+
+async def policy_generator(
+    request: Request, user: Annotated[dict, Depends(get_user)]
+) -> Policy:
+    """
+    Return a Policy allowing POST requests to /search, but
+    modifying incoming requests to restrict access to specific
+    collections.
+    """
+    search = RoutePermission(
+        paths=["/search"],
+        methods=["POST"],
+    )
+
+    request_transformations = [
+        RequestTransformation(
+            path_formats=["/search"],
+            transform=transform_search,
+        )
+    ]
+
+    policy = Policy(
+        allow=[search],
+        request_transformations=request_transformations,
+        metadata={"collections": user["collections"]},
+    )
+
+    return policy
+
+authorization = build_authorization_dependency(
+    policy_generator=policy_generator,
+)
+
+app = FastAPI(dependencies=[Depends(authorization)])
 ```
 
-You can use one or both of these mechanisms, depending on your needs. If you don't want to mess around with defining each route covered by each extension and want to protect the entire app, you can use the Global Integration above.
+to this:
+
+```python
+from fastapi_authorization_gateway.auth import wrap_router
+authorization = build_authorization_dependency(
+    policy_generator=policy_generator,
+)
+
+app = FastAPI()
+
+# define all routes
+@app.post("/search")
+def search(request: Request, search_body: SearchBody):
+    return search_body
+
+# after defining all routes, we can wrap the router, replacing
+# all routes with wrapped versions
+wrap_router(app.router, authorization_dependency=authorization)
+```
+
+### RequestTransformation
+
+A `RequestTransformation` object determines how specific routes will have their incoming request data transformed. They are pretty simple in structure: we define a list of `path_formats` which will be matched against the `path_format` of the Route for a request. If they match, the `transform` function will be passed the `Request`, the active `Policy` and any other arguments defined on the original endpoint.
+
+### Transform functions
+
+A transform function should accept a `Request` object, a `Policy` and any other parameters passed to the original endpoint, if they are useful for the transformation. The transform function returns nothing. Any mutations should be done in-place, since the objects being modified are later passed on to the original endpoint. In the example above, our transform function accepts the `search_body` parameter and modifieds its `collections` property in-place.

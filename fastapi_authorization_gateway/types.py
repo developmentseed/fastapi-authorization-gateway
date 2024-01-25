@@ -34,7 +34,6 @@ class RoutePermission(BaseModel):
     methods: Sequence[str]
     path_params: Optional[Mapping[str, Annotated[Any, Path]]] = None
     query_params: Optional[Mapping[str, Annotated[Any, Query]]] = None
-    body: Optional[BaseModel] = None
 
     class Config:
         arbitrary_types_allowed = True
