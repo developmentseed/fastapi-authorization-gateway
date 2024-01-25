@@ -95,21 +95,6 @@ def transform_search(
     ]
 
 
-def change_age(request_body: bytes) -> bytes:
-    """
-    A function to mutate the request body to change the age of the test data
-    """
-    import json
-    import logging
-
-    decoded_body = json.loads(request_body)
-    logging.info(decoded_body)
-    if decoded_body.get("age", None):
-        decoded_body["age"] = 100
-
-    return json.dumps(decoded_body).encode("utf-8")
-
-
 # build the authorization dependency
 authorization = build_authorization_dependency(
     policy_generator=policy_generator,
