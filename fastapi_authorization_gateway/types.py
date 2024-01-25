@@ -1,7 +1,8 @@
 from datetime import datetime
+from fastapi import Request
 from fastapi.params import Path, Query
-from pydantic import BaseModel
-from typing import Optional, Mapping, Sequence
+from pydantic import BaseModel, Field
+from typing import Annotated, Any, Callable, Optional, Mapping, Sequence
 
 
 class DateWindow(BaseModel):
@@ -31,12 +32,26 @@ class RoutePermission(BaseModel):
 
     paths: Sequence[str]
     methods: Sequence[str]
-    path_params: Optional[Mapping[str, Path]] = None
-    query_params: Optional[Mapping[str, Query]] = None
+    path_params: Optional[Mapping[str, Annotated[Any, Path]]] = None
+    query_params: Optional[Mapping[str, Annotated[Any, Query]]] = None
     body: Optional[BaseModel] = None
 
     class Config:
         arbitrary_types_allowed = True
+
+
+class RequestTransformation(BaseModel):
+    """
+    A transformation function to apply to the request body before
+    passing it along to the route handler.
+
+    The transform function is passed the request, the policy and any
+    additional arguments passed to the route handler. It is expected
+    to mutate values in place and not return anything.
+    """
+
+    path_formats: list[str]
+    transform: Callable[[Request, "Policy", ...], None]  # type: ignore
 
 
 class Policy(BaseModel):
@@ -49,7 +64,8 @@ class Policy(BaseModel):
     The deny permissions boundary takes precedence over the allow permissions boundary.
     """
 
-    allow: list[RoutePermission] = []
-    deny: list[RoutePermission] = []
-    search: SearchConstraints = SearchConstraints()
+    allow: list[RoutePermission] = Field(default_factory=list)
+    deny: list[RoutePermission] = Field(default_factory=list)
+    request_transformations: list[RequestTransformation] = Field(default_factory=list)
+    metadata: dict = Field(default_factory=dict)
     default_deny: bool = True

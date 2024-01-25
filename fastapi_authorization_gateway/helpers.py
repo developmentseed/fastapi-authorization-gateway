@@ -1,6 +1,6 @@
 # from fastapi import Request
 
-# from fastapi_route_authorization.types import Policy
+# from fastapi_authorization_gateway.types import Policy
 
 # def generate_read_only_policy(request: Request) -> Policy:
 #     """

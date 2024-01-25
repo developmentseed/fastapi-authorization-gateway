@@ -3,13 +3,16 @@
 ## Introduction
 This library provides a model for defining route-based permission policies for a FastAPI app and a mechanism for evaluating incoming requests against those policies. It concerns itself with Authorization and is independent of any Authentication considerations. Similarly, it does not concern itself with the way policies are generated. That is left up to you, dear user, but the library does provide a mechanism for *receiving* a Policy from a function you define.
 
+This library is most useful in scenarios where you do not have the ability to modify a set of routes, but do want to control access to them. It was created specifically to support authorization on stac-fastapi, but should be generally useful in similar situations.
+
 ## Setup
 
 Let's look at an example:
 
 ```python
 from fastapi import Depends, Request
-from stac_fastapi_authorization.types import Policy, RoutePermission
+from fastapi_authorization_gateway.auth import build_authorization_dependency
+from fastapi_authorization_gateway.types import Policy, RoutePermission
 
 async def get_user(request: Request):
     return {
@@ -17,7 +20,7 @@ async def get_user(request: Request):
     }
 
 
-def policy_generator(request: Request, user: Annotated[dict, Depends(get_user)]) -> Policy:
+async def policy_generator(request: Request, user: Annotated[dict, Depends(get_user)]) -> Policy:
     """
     Define your policies here based on the requesting user or, really,
     whatever you like. This function will be injected as a dependency
@@ -63,13 +66,13 @@ authorization = build_authorization_dependency(
 )
 ```
 
-Ok, there are a few things going on here. We have defined two functions:
+Ok, there are a few things going on here. We have defined two async functions:
 
 `get_user`
 This is a stand-in for a function you might actually use to retrieve user details from a request. For example, you might leverage HTTP Basic Auth to validate a username/password against a user database and return the row for the requesting user. Alternatively, you might pull user data out of a token. The details are up to you. You don't even need this function, at all, if it doesn't suit your use case, but we provide it as an example to illustrate how you might inject user data into the `policy_generator` function.
 
 `policy_generator`
-This function actually outputs a permissions Policy that our library can use to evaluate and allow/deny incoming requests. How you define your policies is entirely up to you. For example, maybe you have a user object with a `groups` property and want to assign a more permissive policy to users in the "admin" group than to users in the "viewer" group. Maybe you want to leverage JWT claims or scopes to define your policies. The details are up to you. So long as this function returns a `Policy`, it will work with the authorization library. This function is injected as a dependency itself on the `authorization` dependency, so it can leverage any FastAPI Dependencies you like, as illustrated here with the `request` and `get_user` dependencies.
+This coroutine actually outputs a permissions Policy that our library can use to evaluate and allow/deny incoming requests. How you define your policies is entirely up to you. For example, maybe you have a user object with a `groups` property and want to assign a more permissive policy to users in the "admin" group than to users in the "viewer" group. Maybe you want to leverage JWT claims or scopes to define your policies. The details are up to you. So long as this function returns a `Policy`, it will work with the authorization library. This function is injected as a dependency itself on the `authorization` dependency, so it can leverage any FastAPI Dependencies you like, as illustrated here with the `request` and `get_user` dependencies.
 
 Once the `policy_generator` function is defined, we pass it to `build_authorization_dependency`. This function returns an authorization function that can be injected into routes, routers or an entire FastAPI app as a dependency. It will evaluate any incoming requests, against a `Policy` generated using the `policy_generator` function.
 
@@ -95,7 +98,7 @@ For example, suppose we have a REST API serving a `Collection` model at `/collec
 
 ```python
 from fastapi import Request
-from fastapi_route_authorization.types import RoutePermission
+from fastapi_authorization_gateway.types import RoutePermission
 
 def generate_policy(request: Request, Annotated[dict, Depends(get_user)]):
     all_routes = request.app.routes
@@ -115,7 +118,7 @@ The example above allows us to control access to specific routes, but what if we
 ```python
 from fastapi import Request
 from fastapi.params import Path
-from fastapi_route_authorization.types import RoutePermission
+from fastapi_authorization_gateway.types import RoutePermission
 
 def generate_policy(request: Request, Annotated[dict, Depends(get_user)]):
     all_routes = request.app.routes
@@ -125,7 +128,7 @@ def generate_policy(request: Request, Annotated[dict, Depends(get_user)]):
     write_user_collections = RoutePermission(
         routes=collection_routes,
         methods=["PUT", "PATCH", "POST"],
-        path_params={"collecton_id": Path(pattern=user_collection_regex)}
+        path_params={"collecton_id": Annotated[str, Path(pattern=user_collection_regex)]}
     )
     return Policy(allow=[write_user_collections])
 ```
@@ -137,9 +140,10 @@ Note that we leverage FastAPIs `Path` class to define the path parameter conditi
 We may also want to control access depending on which query parameters are specified on a request. We can do so in a similar fashion to the Path Parameters:
 
 ```python
+from typing import Annotated
 from fastapi import Request
 from fastapi.params import Query
-from fastapi_route_authorization.types import RoutePermission
+from fastapi_authorization_gateway.types import RoutePermission
 
 def generate_policy(request: Request, Annotated[dict, Depends(get_user)]):
     all_routes = request.app.routes
@@ -150,7 +154,7 @@ def generate_policy(request: Request, Annotated[dict, Depends(get_user)]):
     read_collections = RoutePermission(
         routes=["/collections"],
         methods=["GET"],
-        query_params={"limit": Query(le=max_count)}
+        query_params={"limit": Annotated[int, Query(le=max_count)]}
     )
     return Policy(allow=[read_collections], default_deny=True)
 ```
@@ -162,7 +166,7 @@ Note the addition of `default_deny=True` in the Policy. We haven't seen this yet
 ```python
 from fastapi import Request
 from fastapi.params import Query
-from fastapi_route_authorization.types import RoutePermission
+from fastapi_authorization_gateway.types import RoutePermission
 
 def generate_policy(request: Request, Annotated[dict, Depends(get_user)]):
     all_routes = request.app.routes
@@ -173,12 +177,12 @@ def generate_policy(request: Request, Annotated[dict, Depends(get_user)]):
     read_collections_le = RoutePermission(
         routes=["/collections"],
         methods=["GET"],
-        query_params={"limit": Query(le=max_count)}
+        query_params={"limit": Annotated[int, Query(le=max_count)]}
     )
     read_collections_gt = RoutePermission(
         routes=["/collections"],
         methods=["GET"],
-        query_params={"limit": Query(gt=max_count)}
+        query_params={"limit": Annotated[int, Query(gt=max_count)]}
     )
 
     return Policy(allow=[read_collections_le], deny=[read_collections_gt])
@@ -189,3 +193,38 @@ def generate_policy(request: Request, Annotated[dict, Depends(get_user)]):
 This bring us to how Policies are evaluted.
 
 TODO: Complete this section
+
+
+## Mutating Requests
+
+Authorization is not only about allowing or denying access to a route. In some cases, it makes sense to mutate a request in order to only return data that the user is allowed to access. For example, we may want to filter queries passed to a Search endpoint in order to avoid returning unauthorized data. fastapi-authorization-gateway enables this functionality, but it does require that we set up our authorization layer a bit differently.
+
+In order to mutate a request before passing it on to the underlying endpoint, we wrap all endpoints in a generic receiving function, which runs the usual authorization code and then executes any desired request transformations prior to passing everything on to the original endpoing. In order to accomplish this, we need to re-register all endpoints on the router, replacing them with their wrapped counterparts. In practice, what this means for you is the code to add fastapi-authorization-gateway to your app will change from this:
+
+```python
+authorization = build_authorization_dependency(
+    policy_generator=policy_generator,
+)
+
+app = FastAPI(dependencies=[Depends(authorization)])
+```
+
+to this:
+
+```python
+from fastapi_authorization_gateway.auth import wrap_router
+authorization = build_authorization_dependency(
+    policy_generator=policy_generator,
+)
+
+app = FastAPI()
+
+# Define any routes
+@app.get("/")
+def home():
+    pass
+
+wrap_router(app.router, authorization_dependency=authorization)
+```
+
+TODO: describe RequestTransformations

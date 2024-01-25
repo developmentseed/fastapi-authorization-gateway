@@ -1,3 +1,4 @@
+# type: ignore
 """fastapi-route-authorization"""
 
 from setuptools import find_namespace_packages, setup
@@ -5,14 +6,20 @@ from setuptools import find_namespace_packages, setup
 with open("README.md") as f:
     desc = f.read()
 
-exec(open("fastapi_route_authorization/version.py").read())
+exec(open("fastapi_authorization_gateway/version.py").read())
 
 install_requires = [
     "fastapi>=0.73.0",
 ]
 
 extra_reqs = {
-    "dev": ["black>=22.3.0", "flake8>=4.0.1", "pyright>=1.1.251"],
+    "dev": [
+        "black>=22.3.0",
+        "flake8>=4.0.1",
+        "pyright>=1.1.251",
+        "pytest>=7.4.4",
+        "httpx==0.26.0",
+    ],
 }
 
 
@@ -42,5 +49,5 @@ setup(
     install_requires=install_requires,
     tests_require=extra_reqs["dev"],
     extras_require=extra_reqs,
-    version=__version__,   # type: ignore
+    version=__version__,  # noqa: F821
 )

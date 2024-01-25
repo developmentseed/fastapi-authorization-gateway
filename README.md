@@ -31,7 +31,7 @@ async def get_user(request: Request):
     }
 
 
-def policy_generator(request: Request, user: Annotated[dict, Depends(get_user)]) -> Policy:
+async def policy_generator(request: Request, user: Annotated[dict, Depends(get_user)]) -> Policy:
     """
     Define your policies here based on the requesting user or, really,
     whatever you like. This function will be injected as a dependency
@@ -76,56 +76,12 @@ authorization = build_authorization_dependency(
     policy_generator=policy_generator,
 )
 
-# This library was originally built for stac-fastapi, so we provide an example for
-# integrating with a StacApi app. If you are using a stock FastAPI app, you can inject
-# the authorization dependency into the APIRouter or on any specific routes that
-# you like.
+app = FastAPI(dependencies=[Depends(authorization)])
 
-StacApi(
-    app=app,
-    router=APIRouter(
-        dependencies=[Depends(authorization)],
-    ),
-    # The routes defined on the APIRouter above cover the core StacAPI,
-    # but not extensions. In order to inject the dependency on extension
-    # routes (e.g. Transactions), we need to leverage the `route_dependencies`
-    # mechanism below.
-    # Alternatively, we might be able to provide the authorization dependency
-    # as a middleware in order to make it universal.
-    route_dependencies=[
-        (
-            [
-                {
-                    "path": "/collections",
-                    "method": "GET",
-                },
-                {
-                    "path": "/collections/{collectionId}",
-                    "method": "PUT",
-                },
-                {
-                    "path": "/collections/{collectionId}",
-                    "method": "DELETE",
-                },
-                {
-                    "path": "/collections/{collectionId}/items",
-                    "method": "POST",
-                },
-                {
-                    "path": "/collections/{collectionId}/items/{itemId}",
-                    "method": "PUT",
-                },
-                {
-                    "path": "/collections/{collectionId}/items/{itemId}",
-                    "method": "DELETE",
-                },
-            ],
-            [Depends(authorization)],
-        ),
-    ],
-    # ...
-    # the rest of your StacApi args go here
-)
+@app.get("/")
+def home(request: Request):
+    return {"status": "ok"}
+
 
 
 ```

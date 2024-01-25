@@ -1,6 +1,6 @@
 # How To
 
-This document will provide quick examples of how to implement common requirements.
+This document will provide brief examples of how to implement common requirements.
 
 ## Route-by-route integration
 
