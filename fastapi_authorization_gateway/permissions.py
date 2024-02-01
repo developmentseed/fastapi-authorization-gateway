@@ -40,19 +40,20 @@ def params_match_permission(
     if permission_params is None:
         logger.debug("No params defined on policy. Match.")
         return True
+    if not request_params:
+        return False
+    param_validator = generate_param_validator(permission_params)
+    try:
+        logger.debug(f"Request params: {request_params}")
+        param_validator(**request_params)
+    except ValidationError as err:
+        logger.debug(
+            "Params do not match permission constraints.", extra={"error": err}
+        )
+        return False
     else:
-        param_validator = generate_param_validator(permission_params)
-        try:
-            logger.debug(f"Request params: {request_params}")
-            param_validator(**request_params)
-        except ValidationError as err:
-            logger.debug(
-                "Params do not match permission constraints.", extra={"error": err}
-            )
-            return False
-        else:
-            logger.debug("Params do match permission constraints.")
-            return True
+        logger.debug("Params do match permission constraints.")
+        return True
 
 
 def has_permission_for_route(
@@ -114,7 +115,7 @@ def has_permission_for_route(
                     return True
             else:
                 return True
-    
+
     if policy.default_deny:
         logger.debug(
             "Route and method did not match any defined policy. Denying access due"
