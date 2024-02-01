@@ -37,23 +37,61 @@ def params_match_permission(
     """
     Validate provided request parameters against the pydantic model defined on a policy.
     """
+
     if permission_params is None:
         logger.debug("No params defined on policy. Match.")
         return True
+
     if not request_params:
+        logger.debug("No request params. Does not match.")
         return False
+
     param_validator = generate_param_validator(permission_params)
+    logger.debug(f"Param validator: {param_validator}")
+
+    logger.debug(f"Request params: {request_params}")
     try:
-        logger.debug(f"Request params: {request_params}")
         param_validator(**request_params)
-    except ValidationError as err:
-        logger.debug(
-            "Params do not match permission constraints.", extra={"error": err}
-        )
-        return False
-    else:
-        logger.debug("Params do match permission constraints.")
+        logger.debug("Params match permission constraints.")
         return True
+    except ValidationError as err:
+        logger.debug(f"Params do not match permission constraints: {err}")
+        return False
+
+
+def policy_applies(permission: RoutePermission, path_params, query_params) -> bool:
+    if not any([permission.path_params, permission.query_params]):
+        logger.debug(
+            "No path or query params defined on policy. Policy applies by default."
+        )
+        return True
+
+    path_match = (
+        params_match_permission(permission.path_params, path_params)
+        if permission.path_params
+        else False
+    )
+    query_match = (
+        params_match_permission(permission.query_params, query_params)
+        if permission.query_params
+        else False
+    )
+
+    if permission.path_params and permission.query_params:
+        logger.debug(f"Path params defined on policy: {path_match=}")
+        logger.debug(f"Query params defined on policy: {query_match=}")
+        return path_match and query_match
+
+    if permission.path_params:
+        logger.debug(f"Path params defined on policy: {path_match=}")
+        return path_match
+
+    if permission.query_params:
+        logger.debug(f"Query params defined on policy: {query_match=}")
+        return query_match
+
+    # Should never get here
+    assert False
 
 
 def has_permission_for_route(
@@ -62,69 +100,35 @@ def has_permission_for_route(
     method: str,
     path_params: dict,
     query_params: dict,
-):
+) -> bool:
     """
     Validate that the policy grants access to the given route, method and query params.
 
     Validates query_params against the pydantic model defined on the policy for a given combination of route
     and method.
     """
-    logger.debug("Checking deny policy")
-    for permission in policy.deny:
-        if route_matches_permission(permission, route_path_format, method):
-            logger.debug("Route and method found in deny policy")
-            if permission.path_params is None and permission.query_params is None:
-                logger.debug(
-                    "No path or query params defined on deny policy. Denying access"
-                    " since route and method match."
-                )
-                return False
 
-            if permission.path_params:
-                logger.debug("Path params defined on deny policy")
-                if params_match_permission(permission.path_params, path_params):
-                    logger.debug("Path params match deny policy. Denying access.")
-                    return False
-            if permission.query_params:
-                logger.debug("Query params defined on deny policy")
-                if params_match_permission(permission.query_params, query_params):
-                    logger.debug("Query params match deny policy. Denying access.")
-                    return False
-            logger.debug("Path and query params did not match deny policy.")
-
-    logger.debug("Checking allow policy")
-    for permission in policy.allow:
-        if route_matches_permission(permission, route_path_format, method):
-            logger.debug("Route and method found in allow policy")
-            if permission.path_params is None and permission.query_params is None:
-                logger.debug(
-                    "No path or query params defined on allow policy. Granting access"
-                    " since route and method match."
-                )
-                return True
-            if permission.path_params:
-                logger.debug("Path params defined on allow policy")
-                if params_match_permission(permission.path_params, path_params):
-                    logger.debug("Path params match allow policy.")
-                else:
-                    return False
-            if permission.query_params:
-                logger.debug("Query params defined on allow policy")
-                if params_match_permission(permission.query_params, query_params):
-                    logger.debug("Query params match allow policy. Granting access.")
-                    return True
-            else:
-                return True
-
-    if policy.default_deny:
-        logger.debug(
-            "Route and method did not match any defined policy. Denying access due"
-            " to default_deny setting."
-        )
+    logger.debug("Looking for explicit denials...")
+    if any(
+        policy_applies(permission, path_params, query_params)
+        for permission in policy.deny
+        if route_matches_permission(permission, route_path_format, method)
+    ):
+        logger.info(f"Denied access.")
         return False
-    else:
-        logger.debug(
-            "Route and method did not match any defined policy. Granting access due"
-            " to default_deny setting."
-        )
+
+    logger.debug("Looking for explicit allows...")
+    if any(
+        policy_applies(permission, path_params, query_params)
+        for permission in policy.allow
+        if route_matches_permission(permission, route_path_format, method)
+    ):
+        logger.info(f"Granted access")
         return True
+
+    is_allowed = not policy.default_deny
+    logger.info(
+        "Route and method did not match any defined policy."
+        f" {'Grant' if is_allowed else 'Deny'}ing access due to default_deny setting."
+    )
+    return is_allowed
