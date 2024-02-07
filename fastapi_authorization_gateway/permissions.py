@@ -41,6 +41,10 @@ def params_match_permission(
     if permission_params is None:
         logger.debug("No params defined on policy. Match.")
         return True
+    
+    if not request_params:
+        logger.debug("No request_params provided. No match.")
+        return False
 
     logger.debug(f"Request params: {request_params}")
 
