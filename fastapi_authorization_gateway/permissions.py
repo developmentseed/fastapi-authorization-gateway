@@ -42,9 +42,7 @@ def params_match_permission(
         logger.debug("No params defined on policy. Match.")
         return True
 
-    if not request_params:
-        logger.debug("No request params. Does not match.")
-        return False
+    logger.debug(f"Request params: {request_params}")
 
     param_validator = generate_param_validator(permission_params)
     logger.debug(f"Param validator: {param_validator}")
