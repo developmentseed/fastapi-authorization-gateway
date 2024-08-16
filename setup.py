@@ -1,5 +1,5 @@
 # type: ignore
-"""fastapi-route-authorization"""
+"""fastapi-authorization-gateway"""
 
 from setuptools import find_namespace_packages, setup
 
@@ -24,7 +24,7 @@ extra_reqs = {
 
 
 setup(
-    name="fastapi-route-authorization",
+    name="fastapi-authorization-gateway",
     description=("A route-based authorization framework for FastAPI"),
     long_description=desc,
     long_description_content_type="text/markdown",
@@ -37,7 +37,7 @@ setup(
     keywords="FastAPI Authorization",
     maintainer="Edward Keeble",
     maintainer_email="edward@developmentseed.org",
-    url="https://github.com/edkeeble/fastapi-route-authorization",
+    url="https://github.com/edkeeble/fastapi-authorization-gateway",
     license="MIT",
     packages=find_namespace_packages(
         exclude=[
