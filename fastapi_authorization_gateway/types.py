@@ -1,7 +1,8 @@
 from datetime import datetime
-from typing import Annotated, Any, Callable, Mapping, Optional, Sequence
+from typing import Any, Callable, Mapping, Optional, Sequence
 
 from pydantic import BaseModel, Field
+from typing_extensions import Annotated
 
 from fastapi import Request
 from fastapi.params import Path, Query

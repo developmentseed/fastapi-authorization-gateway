@@ -1,7 +1,8 @@
 import logging
-from typing import Annotated, Any, Mapping, Optional
+from typing import Any, Mapping, Optional
 
 from pydantic import ValidationError, create_model
+from typing_extensions import Annotated
 
 from fastapi.params import Param
 from fastapi_authorization_gateway.types import Policy, RoutePermission
