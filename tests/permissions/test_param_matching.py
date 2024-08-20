@@ -1,7 +1,9 @@
 """
 Test params_match_permission function.
 """
+
 from typing import Annotated
+
 from fastapi import Path, Query
 from fastapi_authorization_gateway.permissions import params_match_permission
 

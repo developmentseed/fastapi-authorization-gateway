@@ -1,20 +1,13 @@
-from copy import copy
-import logging
 import inspect
-from typing import Callable, Coroutine, Optional, Type
-from fastapi.routing import APIRoute
+import logging
+from copy import copy
+from typing import Any, Callable, Coroutine, Optional, Type
 
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.routing import APIRoute
 from fastapi_authorization_gateway.permissions import has_permission_for_route
 from fastapi_authorization_gateway.types import Policy
 from fastapi_authorization_gateway.utils import get_route, query_params_to_dict
-
-from fastapi import (
-    APIRouter,
-    Depends,
-    Request,
-    HTTPException,
-)
-
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +29,7 @@ def wrap_endpoint(endpoint, response_model: Type):
 
     async def wrapped_endpoint(
         request: Optional[Request] = None, *args, **kwargs
-    ) -> response_model:
+    ) -> Type:
         logger.debug("Calling wrapped endpoint")
         if request:
             if hasattr(request.state, "policy"):
@@ -70,7 +63,7 @@ def wrap_endpoint(endpoint, response_model: Type):
 
     original_signature = inspect.signature(endpoint)
     # give the wrapper function the same signature as the original endpoint)
-    wrapped_endpoint.__signature__ = original_signature
+    wrapped_endpoint.__signature__ = original_signature  # type: ignore
     wrapped_endpoint.__name__ = endpoint.__name__
 
     return wrapped_endpoint
@@ -155,8 +148,10 @@ async def evaluate_request(request: Request, policy: Policy) -> None:
 
 def build_authorization_dependency(
     policy_generator: Coroutine,
-    policy_evaluator: Coroutine = evaluate_request,
-) -> Coroutine:
+    policy_evaluator: Callable[
+        [Any, Policy], Coroutine[Any, Any, Any]
+    ] = evaluate_request,
+) -> Callable[[Any, Policy], Coroutine[Any, Any, Any]]:
     async def authorization_dependency(
         request: Request,
         policy: Policy = Depends(policy_generator),

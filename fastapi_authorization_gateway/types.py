@@ -1,8 +1,10 @@
 from datetime import datetime
+from typing import Annotated, Any, Callable, Mapping, Optional, Sequence
+
+from pydantic import BaseModel, Field
+
 from fastapi import Request
 from fastapi.params import Path, Query
-from pydantic import BaseModel, Field
-from typing import Annotated, Any, Callable, Optional, Mapping, Sequence
 
 
 class DateWindow(BaseModel):

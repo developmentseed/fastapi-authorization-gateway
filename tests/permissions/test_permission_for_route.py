@@ -3,9 +3,10 @@ Test the has_permission_for_route function.
 """
 
 from typing import Annotated
+
 from fastapi import Path, Query
 from fastapi_authorization_gateway.permissions import has_permission_for_route
-from fastapi_authorization_gateway.types import RoutePermission, Policy
+from fastapi_authorization_gateway.types import Policy, RoutePermission
 
 
 def test_has_permission_for_route_no_permissions():

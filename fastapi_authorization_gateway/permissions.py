@@ -1,9 +1,10 @@
 import logging
-from fastapi.params import Param
-from pydantic import ValidationError, create_model
-from fastapi_authorization_gateway.types import Policy, RoutePermission
-from typing import Any, Mapping, Annotated, Optional
+from typing import Annotated, Any, Mapping, Optional
 
+from pydantic import ValidationError, create_model
+
+from fastapi.params import Param
+from fastapi_authorization_gateway.types import Policy, RoutePermission
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +42,7 @@ def params_match_permission(
     if permission_params is None:
         logger.debug("No params defined on policy. Match.")
         return True
-    
+
     if not request_params:
         logger.debug("No request_params provided. No match.")
         return False
@@ -93,7 +94,7 @@ def policy_applies(permission: RoutePermission, path_params, query_params) -> bo
         return query_match
 
     # Should never get here
-    assert False
+    raise Exception("Invalid")
 
 
 def has_permission_for_route(
@@ -116,7 +117,7 @@ def has_permission_for_route(
         for permission in policy.deny
         if route_matches_permission(permission, route_path_format, method)
     ):
-        logger.info(f"Denied access.")
+        logger.info("Denied access.")
         return False
 
     logger.debug("Looking for explicit allows...")
@@ -125,7 +126,7 @@ def has_permission_for_route(
         for permission in policy.allow
         if route_matches_permission(permission, route_path_format, method)
     ):
-        logger.info(f"Granted access")
+        logger.info("Granted access")
         return True
 
     is_allowed = not policy.default_deny

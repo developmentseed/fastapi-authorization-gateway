@@ -2,6 +2,8 @@ name: Python package CI
 
 on:
   push:
+env:
+  LATEST_PY_VERSION: '3.11'
 
 jobs:
   build:
@@ -10,22 +12,31 @@ jobs:
     strategy:
       matrix:
         python-version:
-          - 3.9
-          - "3.10"
+          - '3.8'
+          - '3.9'
+          - '3.10'
+          - '3.11'
+          - '3.12'
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -e ".[dev]"
+          python -m pip install -e ".[dev]"
+
+      - name: Run pre-commit
+        if: ${{ matrix.python-version == env.LATEST_PY_VERSION }}
+        run: |
+          python -m pip install pre-commit
+          pre-commit run --all-files
 
       - name: Test with pytest
-        run: |
-          pytest
+        run: python -m pytest --cov fastapi_authorization_gateway --cov-report xml --cov-report term-missing -s -vv
+

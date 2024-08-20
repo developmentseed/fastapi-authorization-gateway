@@ -1,5 +1,8 @@
 import logging
 from typing import Annotated
+
+from pydantic import BaseModel, Field
+
 from fastapi import Depends, FastAPI, Request
 from fastapi.routing import APIRoute
 from fastapi_authorization_gateway.auth import (
@@ -8,10 +11,9 @@ from fastapi_authorization_gateway.auth import (
 )
 from fastapi_authorization_gateway.types import (
     Policy,
-    RoutePermission,
     RequestTransformation,
+    RoutePermission,
 )
-from pydantic import BaseModel, Field
 
 
 class StacSearch(BaseModel):
