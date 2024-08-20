@@ -1,8 +1,10 @@
+from typing import Dict
+
 from fastapi_authorization_gateway.types import SearchConstraints
 
 
 def apply_permission_boundary_to_search_body(
-    search_body: dict, search_constraints: SearchConstraints
+    search_body: Dict, search_constraints: SearchConstraints
 ):
     """
     Generate a CQL2 clause to AND against the original search body,

@@ -2,7 +2,7 @@
 Test the has_permission_for_route function.
 """
 
-from typing import Annotated
+from typing_extensions import Annotated
 
 from fastapi import Path, Query
 from fastapi_authorization_gateway.permissions import has_permission_for_route

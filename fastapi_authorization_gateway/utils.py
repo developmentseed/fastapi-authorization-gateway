@@ -1,3 +1,4 @@
+from typing import Dict
 from urllib.parse import parse_qs
 
 from fastapi import Request
@@ -16,7 +17,7 @@ def get_route(request: Request):
     )
 
 
-def query_params_to_dict(querystring: str):
+def query_params_to_dict(querystring: str) -> Dict:
     """
     Convert a querystring to a dict.
     """

@@ -1,7 +1,8 @@
 import logging
-from typing import Annotated
+from typing import Dict, List
 
 from pydantic import BaseModel, Field
+from typing_extensions import Annotated
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.routing import APIRoute
@@ -17,7 +18,7 @@ from fastapi_authorization_gateway.types import (
 
 
 class StacSearch(BaseModel):
-    collections: list[str] = Field(default_factory=list)
+    collections: List[str] = Field(default_factory=list)
 
 
 class TestData(BaseModel):
@@ -30,7 +31,7 @@ async def get_user(request: Request):
 
 
 async def policy_generator(
-    request: Request, user: Annotated[dict, Depends(get_user)]
+    request: Request, user: Annotated[Dict, Depends(get_user)]
 ) -> Policy:
     """
     Define your policies here based on the requesting user or, really,
@@ -40,7 +41,7 @@ async def policy_generator(
     logging.info("Generating policy")
     # We will generate some policies that cover all routes for the app,
     # so we need to enumerate them here.
-    all_routes: list[APIRoute] = request.app.routes
+    all_routes: List[APIRoute] = request.app.routes
 
     # A permission matching write access to all routes, with no constraints
     # on path or query parameters except for the search route

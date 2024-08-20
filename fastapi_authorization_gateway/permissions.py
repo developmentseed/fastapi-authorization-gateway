@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Mapping, Optional
+from typing import Any, Dict, Mapping, Optional
 
 from pydantic import ValidationError, create_model
 from typing_extensions import Annotated
@@ -34,7 +34,7 @@ def route_matches_permission(
 
 def params_match_permission(
     permission_params: Optional[Mapping[str, Annotated[Any, Param]]],
-    request_params: dict,
+    request_params: Dict,
 ):
     """
     Validate provided request parameters against the pydantic model defined on a policy.
@@ -102,8 +102,8 @@ def has_permission_for_route(
     policy: Policy,
     route_path_format: str,
     method: str,
-    path_params: dict,
-    query_params: dict,
+    path_params: Dict,
+    query_params: Dict,
 ) -> bool:
     """
     Validate that the policy grants access to the given route, method and query params.

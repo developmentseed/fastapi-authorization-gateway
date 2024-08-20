@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Callable, Mapping, Optional, Sequence
+from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence
 
 from pydantic import BaseModel, Field
 from typing_extensions import Annotated
@@ -20,9 +20,9 @@ class SearchConstraints(BaseModel):
     None indicates no constraint. An empty list indicates no access.
     """
 
-    collections: Optional[list[str]] = None
-    geometries: Optional[list[dict]] = None
-    date_windows: Optional[list[DateWindow]] = None
+    collections: Optional[List[str]] = None
+    geometries: Optional[List[Dict]] = None
+    date_windows: Optional[List[DateWindow]] = None
 
 
 class RoutePermission(BaseModel):
@@ -52,8 +52,8 @@ class RequestTransformation(BaseModel):
     to mutate values in place and not return anything.
     """
 
-    path_formats: list[str]
-    transform: Callable[[Request, "Policy", ...], None]  # type: ignore
+    path_formats: List[str]
+    transform: Callable[[Request, "Policy", Any], None]
 
 
 class Policy(BaseModel):
@@ -66,8 +66,8 @@ class Policy(BaseModel):
     The deny permissions boundary takes precedence over the allow permissions boundary.
     """
 
-    allow: list[RoutePermission] = Field(default_factory=list)
-    deny: list[RoutePermission] = Field(default_factory=list)
-    request_transformations: list[RequestTransformation] = Field(default_factory=list)
-    metadata: dict = Field(default_factory=dict)
+    allow: List[RoutePermission] = Field(default_factory=list)
+    deny: List[RoutePermission] = Field(default_factory=list)
+    request_transformations: List[RequestTransformation] = Field(default_factory=list)
+    metadata: Dict = Field(default_factory=dict)
     default_deny: bool = True
