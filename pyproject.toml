@@ -70,11 +70,9 @@ exclude_lines = [
 
 [tool.isort]
 profile = "black"
-known_first_party = ["tipg"]
-known_third_party = ["geojson_pydantic", "buildpg", "pydantic"]
+known_first_party = ["fastapi_authorization_gateway"]
 forced_separate = [
     "fastapi",
-    "starlette",
 ]
 default_section = "THIRDPARTY"
 
