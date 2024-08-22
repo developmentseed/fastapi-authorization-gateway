@@ -95,7 +95,7 @@ def policy_applies(permission: RoutePermission, path_params, query_params) -> bo
         return query_match
 
     # Should never get here
-    raise Exception("Invalid")
+    raise SystemError("Unable to check policy by path or query params.")
 
 
 def has_permission_for_route(
