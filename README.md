@@ -1,12 +1,20 @@
 # FastAPI Authorization Gateway
 
+[![Python package CI](https://img.shields.io/github/actions/workflow/status/developmentseed/fastapi-authorization-gateway/test.yaml)](https://github.com/developmentseed/fastapi-authorization-gateway/actions/workflows/test.yaml)
+[![PyPI - Version](https://img.shields.io/pypi/v/fastapi-authorization-gateway)](https://pypi.org/project/fastapi-authorization-gateway/)
+
 This library enables route-level authorization for FastAPI apps. It is particularly useful in cases where you need to limit access to routes that you do not directly control. For example, if you make use of a library which sets up a range of routes on your behalf (it was designed with [stac-fastapi](https://github.com/stac-utils/stac-fastapi) in mind), you can use this library to restrict access to any of those routes using authorization policies. These policies can be evaluated against a combination of route paths, methods, path parameters and query parameters. It also provides a mechanism for mutating requests before passing them on to downstream endpoints, for cases where you need to pre-emptively filter a request.
 
 ## Setup
 
-Install via pip. Use the github URL until we get this up on pypi:
+Install via pip
 
-`pip install git+https://github.com/edkeeble/fastapi-authorization-gateway.git`
+```bash
+python -m pip install fastapi-authorization-gateway
+
+# or from source
+python -m pip install git+https://github.com/developmentseed/fastapi-authorization-gateway.git`
+```
 
 ## Usage
 
@@ -67,7 +75,7 @@ async def policy_generator(request: Request, user: Annotated[dict, Depends(get_u
     # a more permissive policy granting write and read access on all routes, falling back
     # to approving a request if it matches none of the permissions
     authorized_policy = Policy(allow=[all_write, all_read], default_deny=False)
-    
+
     if not user:
         # anonymous requests get read only permissions
         return read_only_policy
