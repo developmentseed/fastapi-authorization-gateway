@@ -1,9 +1,11 @@
 import logging
-from fastapi.params import Param
-from pydantic import ValidationError, create_model
-from fastapi_authorization_gateway.types import Policy, RoutePermission
-from typing import Any, Mapping, Annotated, Optional
+from typing import Any, Dict, Mapping, Optional
 
+from pydantic import ValidationError, create_model
+from typing_extensions import Annotated
+
+from fastapi.params import Param
+from fastapi_authorization_gateway.types import Policy, RoutePermission
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +34,7 @@ def route_matches_permission(
 
 def params_match_permission(
     permission_params: Optional[Mapping[str, Annotated[Any, Param]]],
-    request_params: dict,
+    request_params: Dict,
 ):
     """
     Validate provided request parameters against the pydantic model defined on a policy.
@@ -41,7 +43,7 @@ def params_match_permission(
     if permission_params is None:
         logger.debug("No params defined on policy. Match.")
         return True
-    
+
     if not request_params:
         logger.debug("No request_params provided. No match.")
         return False
@@ -93,15 +95,15 @@ def policy_applies(permission: RoutePermission, path_params, query_params) -> bo
         return query_match
 
     # Should never get here
-    assert False
+    raise SystemError("Unable to check policy by path or query params.")
 
 
 def has_permission_for_route(
     policy: Policy,
     route_path_format: str,
     method: str,
-    path_params: dict,
-    query_params: dict,
+    path_params: Dict,
+    query_params: Dict,
 ) -> bool:
     """
     Validate that the policy grants access to the given route, method and query params.
@@ -116,7 +118,7 @@ def has_permission_for_route(
         for permission in policy.deny
         if route_matches_permission(permission, route_path_format, method)
     ):
-        logger.info(f"Denied access.")
+        logger.info("Denied access.")
         return False
 
     logger.debug("Looking for explicit allows...")
@@ -125,7 +127,7 @@ def has_permission_for_route(
         for permission in policy.allow
         if route_matches_permission(permission, route_path_format, method)
     ):
-        logger.info(f"Granted access")
+        logger.info("Granted access")
         return True
 
     is_allowed = not policy.default_deny

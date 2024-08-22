@@ -6,8 +6,10 @@ routes and POST only on the Search route. It also defines a
 transformation function that filters the requested collections on the
 search route to only those that the user has access to.
 """
+
+from .example_app import app
+
 from fastapi.testclient import TestClient
-from fastapi_authorization_gateway.tests.integration.example_app import app
 
 client = TestClient(app)
 
