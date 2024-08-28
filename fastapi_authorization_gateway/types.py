@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Mapping, Optional, Sequence
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from typing_extensions import Annotated
 
 from fastapi import Request
@@ -38,8 +38,9 @@ class RoutePermission(BaseModel):
     path_params: Optional[Mapping[str, Annotated[Any, Path]]] = None
     query_params: Optional[Mapping[str, Annotated[Any, Query]]] = None
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(
+        arbitrary_types_allowed=True,
+    )
 
 
 class RequestTransformation(BaseModel):
